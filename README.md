@@ -1,36 +1,85 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SalesFlow CRM
 
-## Getting Started
+A custom CRM system for automobile parts sales with call-based order management.
 
-First, run the development server:
+## 📌 Overview
 
+SalesFlow CRM is designed for automobile parts businesses where customers call the sales team to place orders. The system manages the entire workflow from initial customer contact through payment processing, order fulfillment, and follow-up.
+
+## 🚀 Features
+
+- **Customer Management** - Track customer details and order history
+- **Order Management** - Create and manage orders for automobile parts
+- **Product Catalog** - Manage inventory of automobile parts by make, model, and year
+- **Secure Payment Processing** - Integrate with Authorize.net without exposing credentials to sales team
+- **Team Assignment** - Assign orders to sales, processing, and follow-up teams
+- **Order Tracking** - Track order status from quote to delivery
+- **Support Tickets** - Handle customer issues and feedback
+
+## 👥 User Roles
+
+- **Admin** - Manage users, roles, organizations, and permissions
+- **Sales Team** - Receive calls, create orders, process payments
+- **Processing Team** - Procure parts, manage shipping
+- **Follow-Up Team** - Track delivery, collect feedback, handle tickets
+- **Customer** - End users who place orders
+
+## 🛠 Tech Stack
+
+- **Frontend**: Next.js 16, React 19, TypeScript
+- **Styling**: Tailwind CSS
+- **Authentication**: Clerk
+- **Backend**: GraphQL API (to be implemented)
+- **Database**: PostgreSQL/MySQL (to be configured)
+- **Payments**: Authorize.net API
+
+## 🏁 Getting Started
+
+### Prerequisites
+
+- Node.js 20+ 
+- npm/yarn/pnpm
+
+### Installation
+
+1. Clone the repository:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/AnsariUsaid/salesflow-CRM.git
+cd salesflow-CRM
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install dependencies:
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Set up environment variables:
+```bash
+cp .env.example .env.local
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. Run the development server:
+```bash
+npm run dev
+```
 
-## Learn More
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-To learn more about Next.js, take a look at the following resources:
+## 📁 Project Structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+/app              # Next.js app directory
+/public           # Static assets
+/src              # Source code (components, lib, types)
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🔐 Environment Variables
 
-## Deploy on Vercel
+Required environment variables will be documented as features are implemented:
+- Clerk authentication keys
+- Database connection
+- Authorize.net API credentials
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 📝 License
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Private - All rights reserved
