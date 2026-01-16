@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useUser } from '@clerk/nextjs';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -32,6 +33,31 @@ interface PaymentFormData {
 }
 
 export default function PaymentPage() {
+  const { isLoaded, isSignedIn } = useUser();
+  const router = useRouter();
+  
+  // Redirect if not signed in
+  if (isLoaded && !isSignedIn) {
+    router.push('/sign-in');
+    return null;
+  }
+
+  // Show loading state
+  if (!isLoaded) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return <PaymentPageContent />;
+}
+
+function PaymentPageContent() {
   const router = useRouter();
   const [orderData, setOrderData] = useState<any>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
