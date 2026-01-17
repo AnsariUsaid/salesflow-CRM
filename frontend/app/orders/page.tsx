@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQuery } from '@apollo/client';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -15,11 +16,18 @@ import {
   ShoppingCart,
 } from 'lucide-react';
 import { OrderProduct, Product, Order } from '@/types';
-import { mockProducts, mockOrders } from '@/lib/mockData';
+import { GET_PRODUCTS, GET_ORDERS } from '@/lib/graphql/queries';
 
 export default function OrdersPage() {
   const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  
+  // Fetch products and orders from database
+  const { data: productsData, loading: productsLoading } = useQuery(GET_PRODUCTS);
+  const { data: ordersData, loading: ordersLoading } = useQuery(GET_ORDERS);
+  
+  const dbProducts = productsData?.products || [];
+  const dbOrders = ordersData?.orders || [];
   
   // Form States
   const [formData, setFormData] = useState({
@@ -51,17 +59,22 @@ export default function OrdersPage() {
     setIsSearching(!!query);
   };
 
-  const addProduct = (product: Product) => {
+  const addProduct = (product: any) => {
     const newOrderProduct: OrderProduct = {
-      ...product,
+      product_id: product.id,
+      product_name: product.productName,
+      product_code: `PC-${product.id.slice(0, 8)}`,
+      make: product.make,
+      model: product.model,
+      year: product.year.toString(),
       quantity: 1,
-      price: 50.00,
+      price: 50.00, // Default price, should come from backend
     };
 
-    const exists = selectedProducts.find(p => p.product_id === product.product_id);
+    const exists = selectedProducts.find(p => p.product_id === product.id);
     if (exists) {
       setSelectedProducts(prev => prev.map(p => 
-        p.product_id === product.product_id 
+        p.product_id === product.id 
           ? { ...p, quantity: p.quantity + 1 } 
           : p
       ));
@@ -122,11 +135,12 @@ export default function OrdersPage() {
   // Filter products based on search
   const filteredProducts = useMemo(() => {
     if (!searchQuery) return [];
-    return mockProducts.filter(p => 
-      p.product_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.product_code.toLowerCase().includes(searchQuery.toLowerCase())
+    return dbProducts.filter((p: any) => 
+      p.productName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.make?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.model?.toLowerCase().includes(searchQuery.toLowerCase())
     );
-  }, [searchQuery]);
+  }, [searchQuery, dbProducts]);
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden font-sans text-gray-800">
@@ -162,31 +176,40 @@ export default function OrdersPage() {
                 </div>
             )}
             
-            <div className="space-y-1">
-                {mockOrders.map((order) => (
-                    <div 
-                        key={order.order_id} 
-                        className={`flex items-center px-4 py-3 hover:bg-slate-800 cursor-pointer transition-colors ${!isSidebarOpen && 'justify-center'}`}
-                    >
-                        <div className={`w-2 h-2 rounded-full mr-3 ${
-                            order.order_status === 'created' ? 'bg-yellow-400' :
-                            order.order_status === 'processing' ? 'bg-blue-400' :
-                            order.order_status === 'shipped' ? 'bg-purple-400' :
-                            'bg-green-400'
-                        }`} />
-                        
-                        {isSidebarOpen && (
-                            <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium truncate text-slate-200">{order.customer_name}</p>
-                                <div className="flex justify-between text-xs text-slate-400">
-                                    <span>{order.order_id}</span>
-                                    <span>${order.total_amount}</span>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                ))}
-            </div>
+            {ordersLoading ? (
+              <div className="px-4 py-3 text-slate-400 text-sm">Loading orders...</div>
+            ) : dbOrders.length === 0 ? (
+              <div className="px-4 py-3 text-slate-400 text-sm">No orders yet</div>
+            ) : (
+              <div className="space-y-1">
+                  {dbOrders.slice(0, 10).map((order: any) => (
+                      <div 
+                          key={order.id} 
+                          className={`flex items-center px-4 py-3 hover:bg-slate-800 cursor-pointer transition-colors ${!isSidebarOpen && 'justify-center'}`}
+                      >
+                          <div className={`w-2 h-2 rounded-full mr-3 ${
+                              order.orderStatus === 'PENDING' ? 'bg-yellow-400' :
+                              order.orderStatus === 'CONFIRMED' ? 'bg-blue-400' :
+                              order.orderStatus === 'SHIPPED' ? 'bg-purple-400' :
+                              order.orderStatus === 'DELIVERED' ? 'bg-green-400' :
+                              'bg-red-400'
+                          }`} />
+                          
+                          {isSidebarOpen && (
+                              <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium truncate text-slate-200">
+                                    {order.user?.firstName || 'Customer'} {order.user?.lastName || ''}
+                                  </p>
+                                  <div className="flex justify-between text-xs text-slate-400">
+                                      <span>{order.id.slice(0, 8)}</span>
+                                      <span>${order.totalAmount?.toFixed(2) || '0.00'}</span>
+                                  </div>
+                              </div>
+                          )}
+                      </div>
+                  ))}
+              </div>
+            )}
         </div>
       </aside>
 
@@ -273,22 +296,38 @@ export default function OrdersPage() {
                 </div>
 
                 {/* Search Results Dropdown */}
-                {isSearching && filteredProducts.length > 0 && (
-                    <div className="absolute z-10 w-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-60 overflow-y-auto">
-                        {filteredProducts.map(product => (
-                            <div 
-                                key={product.product_id}
-                                className="px-4 py-3 hover:bg-blue-50 cursor-pointer flex justify-between items-center border-b border-gray-100 last:border-0"
-                                onClick={() => addProduct(product)}
-                            >
-                                <div>
-                                    <div className="font-medium text-gray-800">{product.product_name}</div>
-                                    <div className="text-sm text-gray-500">{product.product_code} • {product.make} {product.model}</div>
-                                </div>
-                                <Plus size={16} className="text-blue-600" />
-                            </div>
-                        ))}
-                    </div>
+                {isSearching && (
+                  <>
+                    {productsLoading && (
+                      <div className="absolute z-10 w-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 p-4 text-center text-gray-500">
+                        Loading products...
+                      </div>
+                    )}
+                    {!productsLoading && filteredProducts.length > 0 && (
+                      <div className="absolute z-10 w-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-60 overflow-y-auto">
+                          {filteredProducts.map((product: any) => (
+                              <div 
+                                  key={product.id}
+                                  className="px-4 py-3 hover:bg-blue-50 cursor-pointer flex justify-between items-center border-b border-gray-100 last:border-0"
+                                  onClick={() => addProduct(product)}
+                              >
+                                  <div>
+                                      <div className="font-medium text-gray-800">{product.productName}</div>
+                                      <div className="text-sm text-gray-500">
+                                        {product.make} {product.model} ({product.year})
+                                      </div>
+                                  </div>
+                                  <Plus size={16} className="text-blue-600" />
+                              </div>
+                          ))}
+                      </div>
+                    )}
+                    {!productsLoading && filteredProducts.length === 0 && searchQuery && (
+                      <div className="absolute z-10 w-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 p-4 text-center text-gray-500">
+                        No products found
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
 

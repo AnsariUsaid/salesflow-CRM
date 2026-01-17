@@ -1,4 +1,7 @@
+'use client';
+
 import Link from "next/link";
+import { useQuery } from "@apollo/client";
 import { 
   LayoutDashboard, 
   PlusCircle, 
@@ -11,23 +14,38 @@ import {
   MoreVertical,
   ChevronRight
 } from 'lucide-react';
-
-// --- Mock Data for Dashboard ---
-const DASHBOARD_STATS = [
-  { label: 'Total Revenue', value: '$124,500', change: '+12.5%', icon: TrendingUp, color: 'text-green-600', bg: 'bg-green-100' },
-  { label: 'Active Orders', value: '45', change: '+4', icon: Package, color: 'text-blue-600', bg: 'bg-blue-100' },
-  { label: 'New Customers', value: '12', change: '+2.4%', icon: Users, color: 'text-purple-600', bg: 'bg-purple-100' },
-  { label: 'Pending Process', value: '8', change: '-2', icon: Clock, color: 'text-orange-600', bg: 'bg-orange-100' },
-];
-
-const RECENT_ACTIVITY = [
-  { id: 1, user: 'John Doe', action: 'Created new order', target: '#ORD-7782', time: '2 mins ago', status: 'created' },
-  { id: 2, user: 'Sarah Smith', action: 'Processed payment', target: '$450.00', time: '15 mins ago', status: 'success' },
-  { id: 3, user: 'Mike Ross', action: 'Updated shipping', target: '#ORD-7740', time: '1 hour ago', status: 'updated' },
-  { id: 4, user: 'System', action: 'Daily report generated', target: 'PDF', time: '4 hours ago', status: 'system' },
-];
+import { GET_ORDERS, GET_USERS } from "@/lib/graphql/queries";
 
 export default function Home() {
+  const { data: ordersData, loading: ordersLoading } = useQuery(GET_ORDERS);
+  const { data: usersData, loading: usersLoading } = useQuery(GET_USERS);
+
+  // Calculate stats from real data
+  const orders = ordersData?.orders || [];
+  const users = usersData?.users || [];
+  
+  const totalRevenue = orders.reduce((sum: number, order: any) => sum + (order.totalAmount || 0), 0);
+  const activeOrders = orders.filter((o: any) => o.orderStatus !== 'DELIVERED' && o.orderStatus !== 'CANCELLED').length;
+  const pendingOrders = orders.filter((o: any) => o.orderStatus === 'PENDING').length;
+
+  const DASHBOARD_STATS = [
+    { label: 'Total Revenue', value: `$${totalRevenue.toFixed(2)}`, change: '+12.5%', icon: TrendingUp, color: 'text-green-600', bg: 'bg-green-100' },
+    { label: 'Active Orders', value: activeOrders.toString(), change: '+4', icon: Package, color: 'text-blue-600', bg: 'bg-blue-100' },
+    { label: 'Total Users', value: users.length.toString(), change: '+2.4%', icon: Users, color: 'text-purple-600', bg: 'bg-purple-100' },
+    { label: 'Pending Orders', value: pendingOrders.toString(), change: '-2', icon: Clock, color: 'text-orange-600', bg: 'bg-orange-100' },
+  ];
+
+  // Recent orders as activity
+  const recentOrders = orders.slice(0, 4).map((order: any, index: number) => ({
+    id: index + 1,
+    user: `${order.user?.firstName || 'Unknown'} ${order.user?.lastName || ''}`,
+    action: 'Created new order',
+    target: `$${order.totalAmount?.toFixed(2) || '0.00'}`,
+    time: new Date(order.createdAt).toLocaleDateString(),
+    status: order.orderStatus?.toLowerCase() || 'created'
+  }));
+
+  const isLoading = ordersLoading || usersLoading;
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="p-8 max-w-7xl mx-auto space-y-8">
@@ -35,7 +53,7 @@ export default function Home() {
         {/* Welcome Section */}
         <div className="flex justify-between items-end">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800">Welcome back, John</h1>
+            <h1 className="text-3xl font-bold text-gray-800">Welcome back, Admin</h1>
             <p className="text-gray-500 mt-1">Here is what&apos;s happening with your store today.</p>
           </div>
           <div className="flex gap-3">
@@ -51,45 +69,78 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Loading State */}
+        {isLoading && (
+          <div className="text-center py-12">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <p className="mt-2 text-gray-600">Loading dashboard data...</p>
+          </div>
+        )}
+
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {DASHBOARD_STATS.map((stat, idx) => (
-            <div key={idx} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex justify-between items-start mb-4">
-                <div className={`p-3 rounded-lg ${stat.bg}`}>
-                  <stat.icon className={stat.color} size={24} />
+        {!isLoading && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {DASHBOARD_STATS.map((stat, idx) => (
+              <div key={idx} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex justify-between items-start mb-4">
+                  <div className={`p-3 rounded-lg ${stat.bg}`}>
+                    <stat.icon className={stat.color} size={24} />
+                  </div>
+                  <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                    stat.change.startsWith('+') ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'
+                  }`}>
+                    {stat.change}
+                  </span>
                 </div>
-                <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                  stat.change.startsWith('+') ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'
-                }`}>
-                  {stat.change}
-                </span>
+                <h3 className="text-2xl font-bold text-gray-800">{stat.value}</h3>
+                <p className="text-sm text-gray-500">{stat.label}</p>
               </div>
-              <h3 className="text-2xl font-bold text-gray-800">{stat.value}</h3>
-              <p className="text-sm text-gray-500">{stat.label}</p>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         {/* Main Content Split */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          {/* Left Col: Recent Activity */}
-          <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col">
-            <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-              <h3 className="font-bold text-gray-800">Recent Activity</h3>
-              <button className="text-blue-600 text-sm font-medium hover:underline">View All</button>
+        {!isLoading && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            {/* Left Col: Recent Activity */}
+            <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col">
+              <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+                <h3 className="font-bold text-gray-800">Recent Orders</h3>
+                <button className="text-blue-600 text-sm font-medium hover:underline">View All</button>
+              </div>
+              <div className="p-6">
+                {recentOrders.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <Package className="mx-auto mb-2 text-gray-400" size={48} />
+                    <p>No orders yet. Create your first order!</p>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {recentOrders.map((item) => (
+                      <div key={item.id} className="flex gap-4 items-start">
+                        <div className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${
+                          item.status === 'pending' ? 'bg-yellow-500' : 
+                          item.status === 'confirmed' ? 'bg-blue-500' : 
+                          item.status === 'delivered' ? 'bg-green-500' :
+                          item.status === 'shipped' ? 'bg-purple-500' :
+                          'bg-gray-400'
+                        }`} />
+                        <div className="flex-1">
+                          <p className="text-sm text-gray-800">
+                            <span className="font-semibold">{item.user}</span> {item.action} <span className="font-mono bg-gray-100 px-1 rounded">{item.target}</span>
+                          </p>
+                          <p className="text-xs text-gray-400 mt-1">{item.time}</p>
+                        </div>
+                        <button className="text-gray-400 hover:text-gray-600">
+                          <MoreVertical size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="p-6">
-              <div className="space-y-6">
-                {RECENT_ACTIVITY.map((item) => (
-                  <div key={item.id} className="flex gap-4 items-start">
-                    <div className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${
-                      item.status === 'created' ? 'bg-blue-500' : 
-                      item.status === 'success' ? 'bg-green-500' :
-                      'bg-gray-400'
-                    }`} />
-                    <div className="flex-1">
                       <p className="text-sm text-gray-800">
                         <span className="font-semibold">{item.user}</span> {item.action} <span className="font-mono bg-gray-100 px-1 rounded">{item.target}</span>
                       </p>
