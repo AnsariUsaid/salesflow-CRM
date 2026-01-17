@@ -190,11 +190,12 @@ export default function Home() {
                       <ChevronRight size={16} className="text-gray-400" />
                     </li>
                   ))}
-               </ul>
+                </ul>
             </div>
 
           </div>
         </div>
+      )}
       </div>
     </div>
   );
