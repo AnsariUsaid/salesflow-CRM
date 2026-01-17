@@ -141,22 +141,9 @@ export default function Home() {
                 )}
               </div>
             </div>
-                      <p className="text-sm text-gray-800">
-                        <span className="font-semibold">{item.user}</span> {item.action} <span className="font-mono bg-gray-100 px-1 rounded">{item.target}</span>
-                      </p>
-                      <p className="text-xs text-gray-400 mt-1">{item.time}</p>
-                    </div>
-                    <button className="text-gray-400 hover:text-gray-600">
-                      <MoreVertical size={16} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
 
-          {/* Right Col: Quick Actions & Mini List */}
-          <div className="space-y-6">
+            {/* Right Col: Quick Actions & Mini List */}
+            <div className="space-y-6">
             
             {/* Quick Shortcuts */}
             <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl shadow-lg p-6 text-white relative overflow-hidden">

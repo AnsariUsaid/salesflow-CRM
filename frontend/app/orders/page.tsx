@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { useQuery } from '@apollo/client';
+import { useQuery } from '@apollo/client/react';
 import { 
   ChevronLeft, 
   ChevronRight, 
