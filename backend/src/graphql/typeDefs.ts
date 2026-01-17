@@ -5,6 +5,7 @@ export const typeDefs = `#graphql
     SALES_AGENT
     PROCESSING_AGENT
     FOLLOWUP_AGENT
+    EMPLOYEE
   }
 
   enum OrderStatus {
