@@ -11,7 +11,9 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^6.36.7",
+    "@prisma/client": "^7.2.0",
     "axios": "^1.13.2",
+    "dotenv": "^17.2.3",
     "lucide-react": "^0.562.0",
     "next": "16.1.2",
     "react": "19.2.3",
@@ -24,6 +26,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.2",
+    "prisma": "^7.2.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
