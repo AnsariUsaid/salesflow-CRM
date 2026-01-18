@@ -95,3 +95,39 @@ export interface PaymentFormData {
   state: string;
   zipCode: string;
 }
+
+// Authorize.net Request Types
+export interface AuthorizeNetLineItem {
+  itemId: string;
+  name: string;
+  description: string;
+  quantity: string;
+  unitPrice: string;
+}
+
+export interface AuthorizeNetPaymentRequest {
+  orderData: {
+    order_id: string;
+    customer: {
+      firstname: string;
+      lastname: string;
+      email: string;
+      phone: string;
+      address: string;
+      city: string;
+      state: string;
+    };
+    products: OrderProduct[];
+    total_amount: number;
+  };
+  paymentData: PaymentFormData;
+}
+
+export interface AuthorizeNetResponse {
+  success: boolean;
+  transactionId?: string;
+  authCode?: string;
+  responseCode?: string;
+  message?: string;
+  error?: string;
+}

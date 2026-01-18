@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { useUser } from '@clerk/nextjs';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -18,6 +19,31 @@ import { OrderProduct, Product, Order } from '@/types';
 import { mockProducts, mockOrders } from '@/lib/mockData';
 
 export default function OrdersPage() {
+  const { isLoaded, isSignedIn, user } = useUser();
+  const router = useRouter();
+
+  // Redirect if not signed in
+  if (isLoaded && !isSignedIn) {
+    router.push('/sign-in');
+    return null;
+  }
+
+  // Show loading state
+  if (!isLoaded) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return <OrdersPageContent user={user} />;
+}
+
+function OrdersPageContent({ user }: { user: any }) {
   const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   
@@ -198,7 +224,10 @@ export default function OrdersPage() {
            <h1 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
              <Plus className="text-blue-600" /> New Order
            </h1>
-           <div className="flex gap-3">
+           <div className="flex items-center gap-3">
+              <span className="text-sm text-gray-600">
+                Sales Agent: <span className="font-semibold">{user?.firstName} {user?.lastName}</span>
+              </span>
               <button 
                 onClick={() => router.push('/')}
                 className="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium transition-colors"

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useUser } from '@clerk/nextjs';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -32,11 +33,37 @@ interface PaymentFormData {
 }
 
 export default function PaymentPage() {
+  const { isLoaded, isSignedIn } = useUser();
+  const router = useRouter();
+  
+  // Redirect if not signed in
+  if (isLoaded && !isSignedIn) {
+    router.push('/sign-in');
+    return null;
+  }
+
+  // Show loading state
+  if (!isLoaded) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return <PaymentPageContent />;
+}
+
+function PaymentPageContent() {
   const router = useRouter();
   const [orderData, setOrderData] = useState<any>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [transactionDetails, setTransactionDetails] = useState<any>(null);
 
   // Form State
   const [formData, setFormData] = useState<PaymentFormData>({
@@ -90,16 +117,50 @@ export default function PaymentPage() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
     
-    // Simulate API Call
-    setTimeout(() => {
+    try {
+      // Call payment API
+      const response = await fetch('/api/process-payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          orderData,
+          paymentData: formData,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Store transaction details
+        const transactionData = {
+          transactionId: result.transactionId,
+          authCode: result.authCode,
+          accountNumber: result.accountNumber,
+          amount: formData.amount,
+          orderId: formData.order_id,
+        };
+        
+        setTransactionDetails(transactionData);
+        sessionStorage.setItem('lastTransaction', JSON.stringify(transactionData));
+        sessionStorage.removeItem('pendingOrder');
+        
+        setIsSuccess(true);
+      } else {
+        // Show error
+        alert(`Payment Failed: ${result.error}`);
+        setIsProcessing(false);
+      }
+    } catch (error: any) {
+      console.error('Payment error:', error);
+      alert(`Payment Error: ${error.message || 'Unable to process payment'}`);
       setIsProcessing(false);
-      setIsSuccess(true);
-      sessionStorage.removeItem('pendingOrder');
-    }, 2000);
+    }
   };
 
   if (!orderData) {
@@ -115,22 +176,56 @@ export default function PaymentPage() {
 
   if (isSuccess) {
     return (
-      <div className="flex h-screen bg-gray-50 items-center justify-center">
+      <div className="flex h-screen bg-gray-50 items-center justify-center p-4">
         <div className="bg-white p-10 rounded-2xl shadow-xl text-center max-w-md w-full border border-gray-100">
           <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle className="text-green-600" size={40} />
           </div>
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Payment Successful!</h2>
-          <p className="text-gray-500 mb-8">
-            Transaction ID: <span className="font-mono text-gray-700">TXN-{Math.floor(Math.random() * 10000)}-XJ</span><br/>
-            Amount: <span className="font-semibold text-gray-800">${formData.amount.toFixed(2)}</span>
-          </p>
-          <button 
-            onClick={() => router.push('/orders')} 
-            className="w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
-          >
-            Create New Order
-          </button>
+          
+          {transactionDetails && (
+            <div className="bg-gray-50 rounded-lg p-4 mb-6 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Transaction ID:</span>
+                <span className="font-mono text-gray-900 font-semibold">
+                  {transactionDetails.transactionId}
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Auth Code:</span>
+                <span className="font-mono text-gray-900 font-semibold">
+                  {transactionDetails.authCode}
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Card:</span>
+                <span className="font-mono text-gray-900">
+                  •••• {transactionDetails.accountNumber}
+                </span>
+              </div>
+              <div className="flex justify-between text-sm pt-2 border-t border-gray-200">
+                <span className="text-gray-600">Amount:</span>
+                <span className="font-bold text-green-600 text-lg">
+                  ${transactionDetails.amount.toFixed(2)}
+                </span>
+              </div>
+            </div>
+          )}
+          
+          <div className="space-y-3">
+            <button 
+              onClick={() => router.push('/orders')} 
+              className="w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+            >
+              Create New Order
+            </button>
+            <button 
+              onClick={() => router.push('/')} 
+              className="w-full py-3 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+            >
+              Back to Dashboard
+            </button>
+          </div>
         </div>
       </div>
     );
