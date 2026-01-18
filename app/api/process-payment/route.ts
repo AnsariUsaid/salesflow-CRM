@@ -52,7 +52,10 @@ export async function POST(request: NextRequest) {
     }));
 
     // Format expiration date (YYYY-MM)
-    const expirationDate = `20${paymentData.expiryYear}-${paymentData.expiryMonth}`;
+    // Handle year properly for 2030+ by checking if YY is less than current year's last 2 digits
+    const currentYearShort = new Date().getFullYear() % 100;
+    const yearPrefix = parseInt(paymentData.expiryYear) < currentYearShort ? '21' : '20';
+    const expirationDate = `${yearPrefix}${paymentData.expiryYear}-${paymentData.expiryMonth}`;
 
     // Build Authorize.net request
     const authorizeNetRequest = {
@@ -99,7 +102,7 @@ export async function POST(request: NextRequest) {
           transactionSettings: {
             setting: {
               settingName: 'testRequest',
-              settingValue: environment === 'sandbox' ? 'false' : 'false',
+              settingValue: environment === 'sandbox' ? 'true' : 'false',
             },
           },
         },
