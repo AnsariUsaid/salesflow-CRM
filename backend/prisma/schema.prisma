@@ -191,6 +191,7 @@ enum UserRole {
   PROCESSING_AGENT
   FOLLOWUP_AGENT
   EMPLOYEE
+  CUSTOMER
 }
 
 enum OrderStatus {

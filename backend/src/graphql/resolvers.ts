@@ -1,6 +1,32 @@
 import { prismaClient } from "../lib/db";
+import { GraphQLScalarType, Kind } from "graphql";
+
+// Custom DateTime scalar
+const dateTimeScalar = new GraphQLScalarType({
+  name: "DateTime",
+  description: "DateTime custom scalar type",
+  serialize(value: any) {
+    // Send Date to client as ISO string
+    if (value instanceof Date) {
+      return value.toISOString();
+    }
+    return value;
+  },
+  parseValue(value: any) {
+    // Convert client input to Date
+    return new Date(value);
+  },
+  parseLiteral(ast) {
+    if (ast.kind === Kind.STRING) {
+      return new Date(ast.value);
+    }
+    return null;
+  },
+});
 
 export const resolvers = {
+  DateTime: dateTimeScalar,
+
   Query: {
     // Organization Queries
     organizations: async () => {

@@ -1,4 +1,7 @@
 export const typeDefs = `#graphql
+  # Custom Scalars
+  scalar DateTime
+
   # Enums
   enum UserRole {
     ADMIN
@@ -6,6 +9,7 @@ export const typeDefs = `#graphql
     PROCESSING_AGENT
     FOLLOWUP_AGENT
     EMPLOYEE
+    CUSTOMER
   }
 
   enum OrderStatus {
@@ -42,8 +46,8 @@ export const typeDefs = `#graphql
     orgEmail: String!
     numUsers: Int!
     isActive: Boolean!
-    createdAt: String!
-    updatedAt: String!
+    createdAt: DateTime!
+    updatedAt: DateTime!
     users: [User!]
     orders: [Order!]
     tickets: [Ticket!]
@@ -63,8 +67,8 @@ export const typeDefs = `#graphql
     pincode: String
     role: UserRole!
     isDeleted: Boolean!
-    createdAt: String!
-    updatedAt: String!
+    createdAt: DateTime!
+    updatedAt: DateTime!
     organization: Organization!
     orders: [Order!]
     tickets: [Ticket!]
@@ -78,8 +82,8 @@ export const typeDefs = `#graphql
     year: Int!
     productName: String!
     description: String
-    createdAt: String!
-    updatedAt: String!
+    createdAt: DateTime!
+    updatedAt: DateTime!
   }
 
   type Order {
@@ -94,8 +98,8 @@ export const typeDefs = `#graphql
     followupAgentId: String
     orderTracking: String
     orderStatus: OrderStatus!
-    createdAt: String!
-    updatedAt: String!
+    createdAt: DateTime!
+    updatedAt: DateTime!
     user: User!
     organization: Organization!
     products: [OrderProduct!]
@@ -108,8 +112,8 @@ export const typeDefs = `#graphql
     productId: String!
     procurementCost: Float!
     procurementSource: String!
-    createdAt: String!
-    updatedAt: String!
+    createdAt: DateTime!
+    updatedAt: DateTime!
     order: Order!
     product: Product!
   }
@@ -122,8 +126,8 @@ export const typeDefs = `#graphql
     type: TicketType!
     status: TicketStatus!
     followupAgentId: String
-    createdAt: String!
-    updatedAt: String!
+    createdAt: DateTime!
+    updatedAt: DateTime!
     organization: Organization!
     user: User!
     order: Order!
@@ -136,8 +140,8 @@ export const typeDefs = `#graphql
     status: PaymentStatus!
     amountPaid: Float!
     agentId: String
-    createdAt: String!
-    updatedAt: String!
+    createdAt: DateTime!
+    updatedAt: DateTime!
     user: User!
     order: Order!
   }
