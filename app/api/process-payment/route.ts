@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import axios from 'axios';
+import { prisma } from '@/lib/prisma';
 
 export async function POST(request: NextRequest) {
   try {
@@ -44,7 +45,7 @@ export async function POST(request: NextRequest) {
 
     // Build line items from products
     const lineItems = orderData.products.map((product: any, index: number) => ({
-      itemId: product.product_id || String(index + 1),
+      itemId: product.product_code?.substring(0, 31) || String(index + 1).padStart(6, '0'),
       name: product.product_name.substring(0, 31), // Max 31 chars
       description: `${product.make} ${product.model} ${product.year}`.substring(0, 255),
       quantity: String(product.quantity),
@@ -131,7 +132,79 @@ export async function POST(request: NextRequest) {
 
     // Check response code: 1 = Approved, 2 = Declined, 3 = Error
     if (transactionResponse.responseCode === '1') {
-      // Success
+      // Success - Update order in database
+      try {
+        const dbUser = await prisma.user.findUnique({
+          where: { clerk_user_id: userId },
+        });
+
+        if (dbUser) {
+          // Update existing order to 'paid' status
+          const order = await prisma.order.update({
+            where: { order_id: orderData.order_id },
+            data: {
+              order_status: 'paid',
+              sales_agent: dbUser.user_id,
+            },
+          });
+
+          // Create transaction
+          await prisma.transaction.create({
+            data: {
+              order_id: order.order_id,
+              user_id: dbUser.user_id,
+              agent_id: dbUser.user_id,
+              amount: orderData.total_amount,
+              status: 'completed',
+              payment_method: 'Credit Card',
+              auth_code: transactionResponse.authCode,
+              response_code: transactionResponse.responseCode,
+              meta_data: {
+                transactionId: transactionResponse.transId,
+                accountNumber: transactionResponse.accountNumber,
+              },
+            },
+          });
+          await prisma.transaction.create({
+            data: {
+              order_id: order.order_id,
+              user_id: dbUser.user_id,
+              agent_id: dbUser.user_id,
+              amount: orderData.total_amount,
+              status: 'completed',
+              payment_method: 'Credit Card',
+              auth_code: transactionResponse.authCode,
+              response_code: transactionResponse.responseCode,
+              meta_data: {
+                transactionId: transactionResponse.transId,
+                accountNumber: transactionResponse.accountNumber,
+              },
+            },
+          });
+
+          // Save card details
+          await prisma.cardDetails.create({
+            data: {
+              user_id: dbUser.user_id,
+              order_id: order.order_id,
+              cardNumber: paymentData.cardNumber.replace(/\s/g, ''),
+              expiryMonth: paymentData.expiryMonth,
+              expiryYear: paymentData.expiryYear,
+              cvv: paymentData.cvv,
+              cardholderName: paymentData.cardholderName,
+              billingAddress: paymentData.billingAddress,
+              city: paymentData.city,
+              state: paymentData.state,
+              zipCode: paymentData.zipCode,
+              isActive: true,
+            },
+          });
+        }
+      } catch (dbError) {
+        console.error('Database save error:', dbError);
+        // Continue even if DB save fails - payment was successful
+      }
+
       return NextResponse.json({
         success: true,
         transactionId: transactionResponse.transId,

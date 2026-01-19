@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
   output   = "../src/generated/prisma"
@@ -10,7 +7,201 @@ datasource db {
   provider = "postgresql"
 }
 
-// Enums
+model Organization {
+  org_id      String   @id @default(cuid())
+  org_name    String
+  org_email   String?
+  org_phone   String?
+  org_address String?
+  meta_data   Json?
+  isdeleted   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  orders      Order[]
+  tickets     Ticket[]
+  users       User[]
+
+  @@map("organizations")
+}
+
+model User {
+  user_id          String        @id @default(cuid())
+  clerk_user_id    String        @unique
+  org_id           String
+  firstname        String
+  lastname         String
+  email            String        @unique
+  phone            String?
+  address          String?
+  city             String?
+  state            String?
+  country          String?
+  pincode          String?
+  role             UserRole      @default(customer)
+  isdeleted        Boolean       @default(false)
+  meta_data        Json?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  followupOrders   Order[]       @relation("FollowupAgentOrders")
+  processingOrders Order[]       @relation("ProcessingAgentOrders")
+  salesOrders      Order[]       @relation("SalesAgentOrders")
+  orders           Order[]       @relation("CustomerOrders")
+  tickets          Ticket[]
+  transactions     Transaction[]
+  organization     Organization  @relation(fields: [org_id], references: [org_id])
+
+  @@index([clerk_user_id])
+  @@index([org_id])
+  @@index([email])
+  @@map("users")
+}
+
+model Product {
+  product_id    String         @id @default(cuid())
+  product_name  String
+  product_code  String         @unique
+  description   String?
+  make          String
+  model         String
+  year          String
+  meta_data     Json?
+  isdeleted     Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  orderProducts OrderProduct[]
+
+  @@index([product_code])
+  @@map("products")
+}
+
+model Order {
+  order_id          String         @id @default(cuid())
+  org_id            String
+  user_id           String
+  customer_name     String
+  customer_email    String
+  customer_phone    String
+  total_amount      Float
+  discounted_amount Float?
+  shipping_address  String
+  sales_agent       String?
+  processing_agent  String?
+  followup_agent    String?
+  order_tracking    String?
+  order_status      OrderStatus    @default(created)
+  meta_data         Json?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  orderProducts     OrderProduct[]
+  followupUser      User?          @relation("FollowupAgentOrders", fields: [followup_agent], references: [user_id])
+  organization      Organization   @relation(fields: [org_id], references: [org_id])
+  processingUser    User?          @relation("ProcessingAgentOrders", fields: [processing_agent], references: [user_id])
+  salesUser         User?          @relation("SalesAgentOrders", fields: [sales_agent], references: [user_id])
+  customer          User           @relation("CustomerOrders", fields: [user_id], references: [user_id])
+  tickets           Ticket[]
+  transactions      Transaction[]
+
+  @@index([org_id])
+  @@index([user_id])
+  @@index([order_status])
+  @@index([createdAt])
+  @@map("orders")
+}
+
+model OrderProduct {
+  orderproduct_id    String   @id @default(cuid())
+  order_id           String
+  product_id         String
+  product_name       String
+  product_code       String
+  make               String
+  model              String
+  year               String
+  procurement_cost   Float?
+  procurement_source String?
+  quantity           Int
+  price              Float
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  order              Order    @relation(fields: [order_id], references: [order_id], onDelete: Cascade)
+  product            Product  @relation(fields: [product_id], references: [product_id])
+
+  @@index([order_id])
+  @@index([product_id])
+  @@map("order_products")
+}
+
+model Transaction {
+  transaction_id String            @id @default(cuid())
+  order_id       String
+  user_id        String
+  agent_id       String
+  amount         Float
+  status         TransactionStatus @default(pending)
+  payment_method String?
+  auth_code      String?
+  response_code  String?
+  meta_data      Json?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  order          Order             @relation(fields: [order_id], references: [order_id])
+  user           User              @relation(fields: [user_id], references: [user_id])
+
+  @@index([order_id])
+  @@index([user_id])
+  @@index([status])
+  @@index([createdAt])
+  @@map("transactions")
+}
+
+model Ticket {
+  ticket_id    String         @id @default(cuid())
+  org_id       String
+  order_id     String?
+  user_id      String
+  title        String
+  description  String
+  priority     TicketPriority @default(medium)
+  status       TicketStatus   @default(open)
+  assigned_to  String?
+  meta_data    Json?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  resolvedAt   DateTime?
+  order        Order?         @relation(fields: [order_id], references: [order_id])
+  organization Organization   @relation(fields: [org_id], references: [org_id])
+  user         User           @relation(fields: [user_id], references: [user_id])
+
+  @@index([org_id])
+  @@index([order_id])
+  @@index([user_id])
+  @@index([status])
+  @@index([priority])
+  @@map("tickets")
+}
+
+model CardDetails {
+  card_id        String   @id @default(cuid())
+  user_id        String
+  order_id       String?
+  cardNumber     String
+  expiryMonth    String
+  expiryYear     String
+  cvv            String
+  cardholderName String
+  billingAddress String
+  city           String
+  state          String
+  zipCode        String
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([user_id])
+  @@index([order_id])
+  @@map("card_details")
+}
+
 enum UserRole {
   admin
   sales
@@ -47,209 +238,4 @@ enum TicketPriority {
   medium
   high
   urgent
-}
-
-// Tables
-model Organization {
-  org_id      String   @id @default(cuid())
-  org_name    String
-  org_email   String?
-  org_phone   String?
-  org_address String?
-  meta_data   Json?
-  isdeleted   Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  users        User[]
-  orders       Order[]
-  tickets      Ticket[]
-
-  @@map("organizations")
-}
-
-model User {
-  user_id        String   @id @default(cuid())
-  clerk_user_id  String   @unique
-  org_id         String
-  firstname      String
-  lastname       String
-  email          String   @unique
-  phone          String?
-  address        String?
-  city           String?
-  state          String?
-  country        String?
-  pincode        String?
-  role           UserRole @default(customer)
-  isdeleted      Boolean  @default(false)
-  meta_data      Json?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  organization      Organization  @relation(fields: [org_id], references: [org_id])
-  orders            Order[]       @relation("CustomerOrders")
-  transactions      Transaction[]
-  salesOrders       Order[]       @relation("SalesAgentOrders")
-  processingOrders  Order[]       @relation("ProcessingAgentOrders")
-  followupOrders    Order[]       @relation("FollowupAgentOrders")
-  tickets           Ticket[]
-
-  @@index([clerk_user_id])
-  @@index([org_id])
-  @@index([email])
-  @@map("users")
-}
-
-model Product {
-  product_id   String  @id @default(cuid())
-  product_name String
-  product_code String  @unique
-  description  String?
-  make         String
-  model        String
-  year         String
-  meta_data    Json?
-  isdeleted    Boolean @default(false)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  orderProducts OrderProduct[]
-
-  @@index([product_code])
-  @@map("products")
-}
-
-model Order {
-  order_id           String      @id @default(cuid())
-  org_id             String
-  user_id            String
-  customer_name      String
-  customer_email     String
-  customer_phone     String
-  total_amount       Float
-  discounted_amount  Float?
-  shipping_address   String
-  sales_agent        String?
-  processing_agent   String?
-  followup_agent     String?
-  order_tracking     String?
-  order_status       OrderStatus @default(created)
-  meta_data          Json?
-  createdAt          DateTime    @default(now())
-  updatedAt          DateTime    @updatedAt
-
-  organization       Organization    @relation(fields: [org_id], references: [org_id])
-  customer           User            @relation("CustomerOrders", fields: [user_id], references: [user_id])
-  salesUser          User?           @relation("SalesAgentOrders", fields: [sales_agent], references: [user_id])
-  processingUser     User?           @relation("ProcessingAgentOrders", fields: [processing_agent], references: [user_id])
-  followupUser       User?           @relation("FollowupAgentOrders", fields: [followup_agent], references: [user_id])
-  orderProducts      OrderProduct[]
-  transactions       Transaction[]
-  tickets            Ticket[]
-
-  @@index([org_id])
-  @@index([user_id])
-  @@index([order_status])
-  @@index([createdAt])
-  @@map("orders")
-}
-
-model OrderProduct {
-  orderproduct_id     String  @id @default(cuid())
-  order_id            String
-  product_id          String
-  product_name        String
-  product_code        String
-  make                String
-  model               String
-  year                String
-  procurement_cost    Float?
-  procurement_source  String?
-  quantity            Int
-  price               Float
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-
-  order    Order   @relation(fields: [order_id], references: [order_id], onDelete: Cascade)
-  product  Product @relation(fields: [product_id], references: [product_id])
-
-  @@index([order_id])
-  @@index([product_id])
-  @@map("order_products")
-}
-
-model Transaction {
-  transaction_id String            @id @default(cuid())
-  order_id       String
-  user_id        String
-  agent_id       String
-  amount         Float
-  status         TransactionStatus @default(pending)
-  payment_method String?
-  auth_code      String?
-  response_code  String?
-  meta_data      Json?
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
-
-  order  Order @relation(fields: [order_id], references: [order_id])
-  user   User  @relation(fields: [user_id], references: [user_id])
-
-  @@index([order_id])
-  @@index([user_id])
-  @@index([status])
-  @@index([createdAt])
-  @@map("transactions")
-}
-
-model Ticket {
-  ticket_id    String         @id @default(cuid())
-  org_id       String
-  order_id     String?
-  user_id      String
-  title        String
-  description  String
-  priority     TicketPriority @default(medium)
-  status       TicketStatus   @default(open)
-  assigned_to  String?
-  meta_data    Json?
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  resolvedAt   DateTime?
-
-  organization Organization @relation(fields: [org_id], references: [org_id])
-  order        Order?       @relation(fields: [order_id], references: [order_id])
-  user         User         @relation(fields: [user_id], references: [user_id])
-
-  @@index([org_id])
-  @@index([order_id])
-  @@index([user_id])
-  @@index([status])
-  @@index([priority])
-  @@map("tickets")
-}
-
-// WARNING: This table stores card details for COLLEGE PROJECT DEMO ONLY
-// NEVER use this in production - PCI DSS violation
-model CardDetails {
-  card_id          String   @id @default(cuid())
-  user_id          String
-  order_id         String?
-  cardNumber       String   // Should be encrypted in production
-  expiryMonth      String
-  expiryYear       String
-  cvv              String   // Should NEVER be stored in production
-  cardholderName   String
-  billingAddress   String
-  city             String
-  state            String
-  zipCode          String
-  isActive         Boolean  @default(true)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-
-  @@index([user_id])
-  @@index([order_id])
-  @@map("card_details")
 }

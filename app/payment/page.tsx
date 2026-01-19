@@ -64,6 +64,8 @@ function PaymentPageContent() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [transactionDetails, setTransactionDetails] = useState<any>(null);
+  const [savedCards, setSavedCards] = useState<any[]>([]);
+  const [showSavedCards, setShowSavedCards] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState<PaymentFormData>({
@@ -95,9 +97,39 @@ function PaymentPageContent() {
       // Redirect back to orders if no pending order
       router.push('/orders');
     }
+
+    // Fetch saved cards
+    async function fetchCards() {
+      try {
+        const res = await fetch('/api/cards');
+        const data = await res.json();
+        if (data.cards) {
+          setSavedCards(data.cards);
+        }
+      } catch (error) {
+        console.error('Error fetching cards:', error);
+      }
+    }
+    fetchCards();
   }, [router]);
 
   // --- Handlers ---
+
+  const useSavedCard = (card: any) => {
+    setFormData(prev => ({
+      ...prev,
+      cardNumber: card.cardNumber.replace(/(\d{4})(?=\d)/g, '$1 '),
+      expiryMonth: card.expiryMonth,
+      expiryYear: card.expiryYear,
+      cvv: '', // Don't pre-fill CVV for security
+      cardholderName: card.cardholderName,
+      billingAddress: card.billingAddress,
+      city: card.city,
+      state: card.state,
+      zipCode: card.zipCode,
+    }));
+    setShowSavedCards(false);
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -274,12 +306,14 @@ function PaymentPageContent() {
                 </div>
 
                 {/* Vehicle */}
-                <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700">
-                    <div className="text-xs text-slate-400 uppercase font-semibold mb-1">Vehicle</div>
-                    <div className="text-white font-medium">
-                      {orderData.vehicle.year} {orderData.vehicle.make} {orderData.vehicle.model}
-                    </div>
-                </div>
+                {orderData.vehicle && (orderData.vehicle.year !== 'N/A' || orderData.vehicle.make !== 'N/A' || orderData.vehicle.model !== 'N/A') && (
+                  <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700">
+                      <div className="text-xs text-slate-400 uppercase font-semibold mb-1">Vehicle</div>
+                      <div className="text-white font-medium">
+                        {orderData.vehicle.year} {orderData.vehicle.make} {orderData.vehicle.model}
+                      </div>
+                  </div>
+                )}
 
                 {/* Items List */}
                 <div>
@@ -353,6 +387,41 @@ function PaymentPageContent() {
                     </div>
 
                     <div className="space-y-5">
+                        {savedCards.length > 0 && (
+                          <div className="mb-4">
+                            <button
+                              type="button"
+                              onClick={() => setShowSavedCards(!showSavedCards)}
+                              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                            >
+                              {showSavedCards ? 'Hide' : 'Use'} Saved Cards ({savedCards.length})
+                            </button>
+                            
+                            {showSavedCards && (
+                              <div className="mt-3 space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-lg p-2">
+                                {savedCards.map((card) => (
+                                  <button
+                                    key={card.card_id}
+                                    type="button"
+                                    onClick={() => useSavedCard(card)}
+                                    className="w-full text-left p-3 bg-gray-50 hover:bg-blue-50 rounded-lg border border-gray-200 hover:border-blue-300 transition-colors"
+                                  >
+                                    <div className="flex justify-between items-center">
+                                      <div>
+                                        <div className="font-medium text-sm">{card.cardholderName}</div>
+                                        <div className="text-xs text-gray-500">
+                                          •••• {card.cardNumber.slice(-4)} - Exp {card.expiryMonth}/{card.expiryYear}
+                                        </div>
+                                      </div>
+                                      <CreditCard size={20} className="text-gray-400" />
+                                    </div>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
                         <InputField 
                             label="Cardholder Name" 
                             name="cardholderName" 

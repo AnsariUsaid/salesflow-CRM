@@ -16,7 +16,6 @@ import {
   ShoppingCart,
 } from 'lucide-react';
 import { OrderProduct, Product, Order } from '@/types';
-import { mockProducts, mockOrders } from '@/lib/mockData';
 
 export default function OrdersPage() {
   const { isLoaded, isSignedIn, user } = useUser();
@@ -47,6 +46,11 @@ function OrdersPageContent({ user }: { user: any }) {
   const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   
+  // Data States
+  const [products, setProducts] = useState<Product[]>([]);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
   // Form States
   const [formData, setFormData] = useState({
     firstname: '',
@@ -64,6 +68,43 @@ function OrdersPageContent({ user }: { user: any }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProducts, setSelectedProducts] = useState<OrderProduct[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+
+  // Fetch products and orders on mount
+  React.useEffect(() => {
+    async function fetchData() {
+      try {
+        console.log('Fetching products and orders...');
+        
+        const [productsRes, ordersRes] = await Promise.all([
+          fetch('/api/products'),
+          fetch('/api/orders'),
+        ]);
+        
+        console.log('Products status:', productsRes.status);
+        console.log('Orders status:', ordersRes.status);
+        
+        const productsData = await productsRes.json();
+        const ordersData = await ordersRes.json();
+        
+        console.log('Products data:', productsData);
+        console.log('Orders data:', ordersData);
+        
+        if (productsData.products) {
+          setProducts(productsData.products);
+          console.log('Set products:', productsData.products.length);
+        }
+        if (ordersData.orders) {
+          setOrders(ordersData.orders);
+          console.log('Set orders:', ordersData.orders.length);
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
 
   // --- Handlers ---
 
@@ -116,9 +157,20 @@ function OrdersPageContent({ user }: { user: any }) {
     return selectedProducts.reduce((acc, curr) => acc + (curr.price * curr.quantity), 0);
   };
 
-  const handleCreateOrder = () => {
+  const handleCreateOrder = async () => {
     if (selectedProducts.length === 0) {
       alert('Please add at least one product');
+      return;
+    }
+
+    // Validate form
+    if (!formData.firstname || !formData.lastname || !formData.email || !formData.phone) {
+      alert('Please fill in all customer information fields');
+      return;
+    }
+
+    if (!formData.vehicleMake || !formData.vehicleModel || !formData.vehicleYear) {
+      alert('Please fill in all vehicle information fields');
       return;
     }
     
@@ -140,19 +192,108 @@ function OrdersPageContent({ user }: { user: any }) {
       products: selectedProducts,
       total_amount: calculateTotal(),
     };
-    
-    sessionStorage.setItem('pendingOrder', JSON.stringify(orderData));
-    router.push('/payment');
+
+    try {
+      setIsLoading(true);
+      
+      // Save order to database
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderData),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        // Order created successfully
+        alert('Order created successfully!');
+        
+        // Ask if user wants to pay now or later
+        const payNow = confirm('Order created! Would you like to proceed with payment now?');
+        
+        if (payNow) {
+          // Store order data for payment
+          sessionStorage.setItem('pendingOrder', JSON.stringify({ ...orderData, order_id: result.order.order_id }));
+          router.push('/payment');
+        } else {
+          // Refresh orders list
+          fetchData();
+          // Reset form
+          setFormData({
+            firstname: '',
+            lastname: '',
+            email: '',
+            phone: '',
+            address: '',
+            city: '',
+            state: '',
+            vehicleMake: '',
+            vehicleModel: '',
+            vehicleYear: '',
+          });
+          setSelectedProducts([]);
+        }
+      } else {
+        alert(`Failed to create order: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Error creating order:', error);
+      alert('Failed to create order. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle payment for existing order
+  const handlePayForOrder = async (order: any) => {
+    // Fetch full order details including products
+    try {
+      const response = await fetch(`/api/orders?order_id=${order.order_id}`);
+      const data = await response.json();
+      
+      if (response.ok && data.order) {
+        const fullOrder = data.order;
+        
+        // Prepare order data for payment
+        const orderData = {
+          order_id: fullOrder.order_id,
+          customer: {
+            firstname: fullOrder.customer_name.split(' ')[0],
+            lastname: fullOrder.customer_name.split(' ').slice(1).join(' '),
+            email: fullOrder.customer_email,
+            phone: fullOrder.customer_phone,
+            address: fullOrder.shipping_address.split(',')[0],
+            city: fullOrder.shipping_address.split(',')[1]?.trim() || '',
+            state: fullOrder.shipping_address.split(',')[2]?.trim() || '',
+          },
+          vehicle: {
+            make: 'N/A',
+            model: 'N/A',
+            year: 'N/A',
+          },
+          products: fullOrder.orderProducts,
+          total_amount: fullOrder.total_amount,
+        };
+        
+        // Store in sessionStorage and redirect to payment
+        sessionStorage.setItem('pendingOrder', JSON.stringify(orderData));
+        router.push('/payment');
+      }
+    } catch (error) {
+      console.error('Error fetching order details:', error);
+      alert('Failed to load order details');
+    }
   };
 
   // Filter products based on search
   const filteredProducts = useMemo(() => {
     if (!searchQuery) return [];
-    return mockProducts.filter(p => 
+    return products.filter(p => 
       p.product_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.product_code.toLowerCase().includes(searchQuery.toLowerCase())
     );
-  }, [searchQuery]);
+  }, [searchQuery, products]);
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden font-sans text-gray-800">
@@ -189,29 +330,49 @@ function OrdersPageContent({ user }: { user: any }) {
             )}
             
             <div className="space-y-1">
-                {mockOrders.map((order) => (
+                {isLoading ? (
+                  <div className="text-center text-slate-400 py-8">Loading...</div>
+                ) : orders.length === 0 ? (
+                  <div className="text-center text-slate-400 py-8">No orders yet</div>
+                ) : (
+                  orders.map((order) => (
                     <div 
                         key={order.order_id} 
-                        className={`flex items-center px-4 py-3 hover:bg-slate-800 cursor-pointer transition-colors ${!isSidebarOpen && 'justify-center'}`}
+                        onClick={() => {
+                          if (order.order_status === 'created') {
+                            handlePayForOrder(order);
+                          }
+                        }}
+                        className={`flex items-center px-4 py-3 hover:bg-slate-800 transition-colors ${!isSidebarOpen && 'justify-center'} ${
+                          order.order_status === 'created' ? 'cursor-pointer' : 'cursor-default'
+                        }`}
+                        title={order.order_status === 'created' ? 'Click to pay' : ''}
                     >
                         <div className={`w-2 h-2 rounded-full mr-3 ${
                             order.order_status === 'created' ? 'bg-yellow-400' :
+                            order.order_status === 'paid' ? 'bg-green-400' :
                             order.order_status === 'processing' ? 'bg-blue-400' :
                             order.order_status === 'shipped' ? 'bg-purple-400' :
-                            'bg-green-400'
+                            'bg-gray-400'
                         }`} />
                         
                         {isSidebarOpen && (
                             <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium truncate text-slate-200">{order.customer_name}</p>
                                 <div className="flex justify-between text-xs text-slate-400">
-                                    <span>{order.order_id}</span>
-                                    <span>${order.total_amount}</span>
+                                    <span>{order.order_id.slice(0, 12)}</span>
+                                    <span className="flex items-center gap-1">
+                                      ${order.total_amount}
+                                      {order.order_status === 'created' && (
+                                        <span className="text-yellow-400 text-[10px]">• Unpaid</span>
+                                      )}
+                                    </span>
                                 </div>
                             </div>
                         )}
                     </div>
-                ))}
+                ))
+                )}
             </div>
         </div>
       </aside>

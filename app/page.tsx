@@ -1,3 +1,5 @@
+'use client';
+
 import Link from "next/link";
 import { 
   LayoutDashboard, 
@@ -11,24 +13,42 @@ import {
   MoreVertical,
   ChevronRight
 } from 'lucide-react';
-import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
-
-// --- Mock Data for Dashboard ---
-const DASHBOARD_STATS = [
-  { label: 'Total Revenue', value: '$124,500', change: '+12.5%', icon: TrendingUp, color: 'text-green-600', bg: 'bg-green-100' },
-  { label: 'Active Orders', value: '45', change: '+4', icon: Package, color: 'text-blue-600', bg: 'bg-blue-100' },
-  { label: 'New Customers', value: '12', change: '+2.4%', icon: Users, color: 'text-purple-600', bg: 'bg-purple-100' },
-  { label: 'Pending Process', value: '8', change: '-2', icon: Clock, color: 'text-orange-600', bg: 'bg-orange-100' },
-];
-
-const RECENT_ACTIVITY = [
-  { id: 1, user: 'John Doe', action: 'Created new order', target: '#ORD-7782', time: '2 mins ago', status: 'created' },
-  { id: 2, user: 'Sarah Smith', action: 'Processed payment', target: '$450.00', time: '15 mins ago', status: 'success' },
-  { id: 3, user: 'Mike Ross', action: 'Updated shipping', target: '#ORD-7740', time: '1 hour ago', status: 'updated' },
-  { id: 4, user: 'System', action: 'Daily report generated', target: 'PDF', time: '4 hours ago', status: 'system' },
-];
+import { SignedIn, SignedOut, SignInButton, UserButton, useUser } from "@clerk/nextjs";
+import { useEffect, useState } from "react";
+import { DashboardStats, RecentActivity, DASHBOARD_STATS_ICONS, RECENT_ACTIVITY_CONFIG } from "./types";
 
 export default function Home() {
+  const { user } = useUser();
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats[]>([]);
+  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
+  const [pendingReviews, setPendingReviews] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch('/api/dashboard-stats')
+      .then(res => res.json())
+      .then(data => {
+        const stats: DashboardStats[] = [
+          { label: 'Total Revenue', value: `$${(data.totalRevenue || 0).toLocaleString()}`, change: '+12.5%', icon: DASHBOARD_STATS_ICONS.TrendingUp, color: 'text-green-600', bg: 'bg-green-100' },
+          { label: 'Active Orders', value: data.activeOrders, change: '+4', icon: DASHBOARD_STATS_ICONS.Package, color: 'text-blue-600', bg: 'bg-blue-100' },
+          { label: 'New Customers', value: data.newCustomers, change: '+2.4%', icon: DASHBOARD_STATS_ICONS.Users, color: 'text-purple-600', bg: 'bg-purple-100' },
+          { label: 'Pending Process', value: data.pendingProcess, change: '-2', icon: DASHBOARD_STATS_ICONS.Clock, color: 'text-orange-600', bg: 'bg-orange-100' },
+        ];
+        setDashboardStats(stats);
+      });
+
+    fetch('/api/recent-activity')
+      .then(res => res.json())
+      .then(data => {
+        setRecentActivity(data);
+      });
+
+    fetch('/api/pending-review')
+      .then(res => res.json())
+      .then(data => {
+        setPendingReviews(data);
+      });
+  }, []);
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
       {/* Top Navigation Bar */}
@@ -83,7 +103,9 @@ export default function Home() {
         {/* Welcome Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 pt-8">
           <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">Welcome back, John</h1>
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">
+              Welcome back{user?.firstName ? `, ${user.firstName}` : ''}
+            </h1>
             <p className="text-gray-600 text-lg">Here is what&apos;s happening with your store today.</p>
           </div>
           <SignedIn>
@@ -113,7 +135,7 @@ export default function Home() {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {DASHBOARD_STATS.map((stat, idx) => (
+          {dashboardStats.map((stat, idx) => (
             <div key={idx} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-lg transition-all hover:scale-105 cursor-pointer group">
               <div className="flex justify-between items-start mb-4">
                 <div className={`p-3 rounded-xl ${stat.bg} group-hover:scale-110 transition-transform`}>
@@ -142,12 +164,10 @@ export default function Home() {
             </div>
             <div className="p-6">
               <div className="space-y-6">
-                {RECENT_ACTIVITY.map((item) => (
+                {recentActivity.map((item) => (
                   <div key={item.id} className="flex gap-4 items-start">
                     <div className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${
-                      item.status === 'created' ? 'bg-blue-500' : 
-                      item.status === 'success' ? 'bg-green-500' :
-                      'bg-gray-400'
+                      (RECENT_ACTIVITY_CONFIG.colors as any)[item.status]
                     }`} />
                     <div className="flex-1">
                       <p className="text-sm text-gray-800">
@@ -204,15 +224,15 @@ export default function Home() {
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
                <h3 className="font-bold text-gray-800 mb-4">Pending Review</h3>
                <ul className="space-y-3">
-                  {[1,2,3].map(i => (
-                    <li key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors">
+                  {pendingReviews.map(order => (
+                    <li key={order.order_id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-600">
-                          JD
+                          {order.customer.firstname.charAt(0)}{order.customer.lastname.charAt(0)}
                         </div>
                         <div className="text-sm">
-                          <p className="font-medium text-gray-700">Order #778{i}</p>
-                          <p className="text-xs text-gray-400">Awaiting approval</p>
+                          <p className="font-medium text-gray-700">Order #{order.order_id.substring(0, 7)}</p>
+                          <p className="text-xs text-gray-400">Awaiting payment</p>
                         </div>
                       </div>
                       <ChevronRight size={16} className="text-gray-400" />
