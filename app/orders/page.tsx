@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
+import { useQuery, useMutation } from '@apollo/client/react';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -16,6 +17,8 @@ import {
   ShoppingCart,
 } from 'lucide-react';
 import { OrderProduct, Product, Order } from '@/types';
+import { GET_PRODUCTS, GET_ORDERS } from '@/graphql/queries';
+import { CREATE_ORDER } from '@/graphql/mutations';
 
 export default function OrdersPage() {
   const { isLoaded, isSignedIn, user } = useUser();
@@ -46,10 +49,14 @@ function OrdersPageContent({ user }: { user: any }) {
   const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   
-  // Data States
-  const [products, setProducts] = useState<Product[]>([]);
-  const [orders, setOrders] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  // Fetch products and orders using GraphQL
+  const { data: productsData, loading: productsLoading } = useQuery(GET_PRODUCTS);
+  const { data: ordersData, loading: ordersLoading, refetch: refetchOrders } = useQuery(GET_ORDERS);
+  const [createOrderMutation, { loading: isCreating }] = useMutation(CREATE_ORDER);
+  
+  const products = productsData?.products || [];
+  const orders = ordersData?.orders || [];
+  const isLoading = productsLoading || ordersLoading;
   
   // Form States
   const [formData, setFormData] = useState({
@@ -68,43 +75,6 @@ function OrdersPageContent({ user }: { user: any }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProducts, setSelectedProducts] = useState<OrderProduct[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-
-  // Fetch products and orders on mount
-  React.useEffect(() => {
-    async function fetchData() {
-      try {
-        console.log('Fetching products and orders...');
-        
-        const [productsRes, ordersRes] = await Promise.all([
-          fetch('/api/products'),
-          fetch('/api/orders'),
-        ]);
-        
-        console.log('Products status:', productsRes.status);
-        console.log('Orders status:', ordersRes.status);
-        
-        const productsData = await productsRes.json();
-        const ordersData = await ordersRes.json();
-        
-        console.log('Products data:', productsData);
-        console.log('Orders data:', ordersData);
-        
-        if (productsData.products) {
-          setProducts(productsData.products);
-          console.log('Set products:', productsData.products.length);
-        }
-        if (ordersData.orders) {
-          setOrders(ordersData.orders);
-          console.log('Set orders:', ordersData.orders.length);
-        }
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    fetchData();
-  }, []);
 
   // --- Handlers ---
 
@@ -174,38 +144,34 @@ function OrdersPageContent({ user }: { user: any }) {
       return;
     }
     
-    const orderData = {
-      customer: {
-        firstname: formData.firstname,
-        lastname: formData.lastname,
-        email: formData.email,
-        phone: formData.phone,
-        address: formData.address,
-        city: formData.city,
-        state: formData.state,
-      },
-      vehicle: {
-        make: formData.vehicleMake,
-        model: formData.vehicleModel,
-        year: formData.vehicleYear,
-      },
-      products: selectedProducts,
-      total_amount: calculateTotal(),
-    };
+    const customer_name = `${formData.firstname} ${formData.lastname}`;
+    const shipping_address = `${formData.address}, ${formData.city}, ${formData.state}`;
+    
+    // Format products for GraphQL
+    const productInputs = selectedProducts.map(p => ({
+      product_id: p.product_id,
+      product_name: p.product_name,
+      product_code: p.product_code,
+      make: formData.vehicleMake,
+      model: formData.vehicleModel,
+      year: formData.vehicleYear,
+      quantity: p.quantity,
+      price: p.price,
+    }));
 
     try {
-      setIsLoading(true);
-      
-      // Save order to database
-      const response = await fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(orderData),
+      const { data } = await createOrderMutation({
+        variables: {
+          customer_name,
+          customer_email: formData.email,
+          customer_phone: formData.phone,
+          shipping_address,
+          total_amount: calculateTotal(),
+          products: productInputs,
+        },
       });
 
-      const result = await response.json();
-
-      if (response.ok) {
+      if (data?.createOrder) {
         // Order created successfully
         alert('Order created successfully!');
         
@@ -214,11 +180,20 @@ function OrdersPageContent({ user }: { user: any }) {
         
         if (payNow) {
           // Store order data for payment
-          sessionStorage.setItem('pendingOrder', JSON.stringify({ ...orderData, order_id: result.order.order_id }));
+          const orderForPayment = {
+            order_id: data.createOrder.order_id,
+            customer_name,
+            customer_email: formData.email,
+            customer_phone: formData.phone,
+            customer_address: shipping_address,
+            total_amount: calculateTotal(),
+            products: productInputs,
+          };
+          sessionStorage.setItem('pendingOrder', JSON.stringify(orderForPayment));
           router.push('/payment');
         } else {
           // Refresh orders list
-          fetchData();
+          refetchOrders();
           // Reset form
           setFormData({
             firstname: '',
@@ -234,54 +209,32 @@ function OrdersPageContent({ user }: { user: any }) {
           });
           setSelectedProducts([]);
         }
-      } else {
-        alert(`Failed to create order: ${result.error}`);
       }
     } catch (error) {
       console.error('Error creating order:', error);
       alert('Failed to create order. Please try again.');
-    } finally {
-      setIsLoading(false);
     }
   };
 
   // Handle payment for existing order
   const handlePayForOrder = async (order: any) => {
-    // Fetch full order details including products
+    // Prepare order data for payment (order already has all needed data from GraphQL)
     try {
-      const response = await fetch(`/api/orders?order_id=${order.order_id}`);
-      const data = await response.json();
+      const orderData = {
+        order_id: order.order_id,
+        customer_name: order.customer_name,
+        customer_email: order.customer_email,
+        customer_phone: order.customer_phone,
+        customer_address: order.shipping_address || '',
+        total_amount: order.total_amount,
+        products: order.orderProducts || [],
+      };
       
-      if (response.ok && data.order) {
-        const fullOrder = data.order;
-        
-        // Prepare order data for payment
-        const orderData = {
-          order_id: fullOrder.order_id,
-          customer: {
-            firstname: fullOrder.customer_name.split(' ')[0],
-            lastname: fullOrder.customer_name.split(' ').slice(1).join(' '),
-            email: fullOrder.customer_email,
-            phone: fullOrder.customer_phone,
-            address: fullOrder.shipping_address.split(',')[0],
-            city: fullOrder.shipping_address.split(',')[1]?.trim() || '',
-            state: fullOrder.shipping_address.split(',')[2]?.trim() || '',
-          },
-          vehicle: {
-            make: 'N/A',
-            model: 'N/A',
-            year: 'N/A',
-          },
-          products: fullOrder.orderProducts,
-          total_amount: fullOrder.total_amount,
-        };
-        
-        // Store in sessionStorage and redirect to payment
-        sessionStorage.setItem('pendingOrder', JSON.stringify(orderData));
-        router.push('/payment');
-      }
+      // Store in sessionStorage and redirect to payment
+      sessionStorage.setItem('pendingOrder', JSON.stringify(orderData));
+      router.push('/payment');
     } catch (error) {
-      console.error('Error fetching order details:', error);
+      console.error('Error preparing order for payment:', error);
       alert('Failed to load order details');
     }
   };
@@ -397,9 +350,10 @@ function OrdersPageContent({ user }: { user: any }) {
               </button>
               <button 
                 onClick={handleCreateOrder}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm transition-colors"
+                disabled={isCreating || isLoading}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                  <Save size={16} /> Create Order
+                  <Save size={16} /> {isCreating ? 'Creating...' : 'Create Order'}
               </button>
            </div>
         </header>

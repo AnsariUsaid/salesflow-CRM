@@ -205,7 +205,7 @@ export default function Home() {
                      <ArrowUpRight size={16} />
                    </Link>
                    <Link 
-                      href="/payment"
+                      href="/orders-list"
                       className="w-full bg-white/10 hover:bg-white/20 border border-white/20 p-3.5 rounded-lg flex items-center justify-between transition-all hover:scale-105 text-sm font-semibold backdrop-blur-sm"
                    >
                      <span className="flex items-center gap-2">

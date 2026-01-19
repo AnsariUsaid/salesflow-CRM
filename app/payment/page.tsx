@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
+import { useMutation } from '@apollo/client/react';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -17,6 +18,7 @@ import {
   FileText,
   ShieldCheck
 } from 'lucide-react';
+import { CREATE_TRANSACTION, UPDATE_ORDER_STATUS } from '@/graphql/mutations';
 
 interface PaymentFormData {
   order_id: string;
@@ -61,11 +63,14 @@ function PaymentPageContent() {
   const router = useRouter();
   const [orderData, setOrderData] = useState<any>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [transactionDetails, setTransactionDetails] = useState<any>(null);
   const [savedCards, setSavedCards] = useState<any[]>([]);
   const [showSavedCards, setShowSavedCards] = useState(false);
+
+  // GraphQL Mutations
+  const [createTransaction, { loading: isProcessing }] = useMutation(CREATE_TRANSACTION);
+  const [updateOrderStatus] = useMutation(UPDATE_ORDER_STATUS);
 
   // Form State
   const [formData, setFormData] = useState<PaymentFormData>({
@@ -90,7 +95,7 @@ function PaymentPageContent() {
       setOrderData(order);
       setFormData(prev => ({
         ...prev,
-        order_id: 'ORD-' + Math.floor(Math.random() * 10000),
+        order_id: order.order_id || 'ORD-' + Math.floor(Math.random() * 10000),
         amount: order.total_amount
       }));
     } else {
@@ -151,31 +156,39 @@ function PaymentPageContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsProcessing(true);
     
     try {
-      // Call payment API
-      const response = await fetch('/api/process-payment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      // Generate mock authorization codes
+      const authCode = 'AUTH' + Math.random().toString(36).substr(2, 9).toUpperCase();
+      const responseCode = '00'; // Success code
+      
+      // Create transaction using GraphQL
+      const { data } = await createTransaction({
+        variables: {
+          order_id: orderData.order_id,
+          amount: formData.amount,
+          payment_method: 'Credit Card',
+          auth_code: authCode,
+          response_code: responseCode,
         },
-        body: JSON.stringify({
-          orderData,
-          paymentData: formData,
-        }),
       });
 
-      const result = await response.json();
+      if (data?.createTransaction) {
+        // Update order status to 'paid'
+        await updateOrderStatus({
+          variables: {
+            order_id: orderData.order_id,
+            order_status: 'PAID',
+          },
+        });
 
-      if (result.success) {
         // Store transaction details
         const transactionData = {
-          transactionId: result.transactionId,
-          authCode: result.authCode,
-          accountNumber: result.accountNumber,
+          transactionId: data.createTransaction.transaction_id,
+          authCode: authCode,
+          accountNumber: formData.cardNumber.slice(-4),
           amount: formData.amount,
-          orderId: formData.order_id,
+          orderId: orderData.order_id,
         };
         
         setTransactionDetails(transactionData);
@@ -184,14 +197,11 @@ function PaymentPageContent() {
         
         setIsSuccess(true);
       } else {
-        // Show error
-        alert(`Payment Failed: ${result.error}`);
-        setIsProcessing(false);
+        alert('Payment Failed: Unable to create transaction');
       }
     } catch (error: any) {
       console.error('Payment error:', error);
       alert(`Payment Error: ${error.message || 'Unable to process payment'}`);
-      setIsProcessing(false);
     }
   };
 
@@ -246,8 +256,14 @@ function PaymentPageContent() {
           
           <div className="space-y-3">
             <button 
-              onClick={() => router.push('/orders')} 
+              onClick={() => router.push('/orders-list')} 
               className="w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+            >
+              View All Orders
+            </button>
+            <button 
+              onClick={() => router.push('/orders')} 
+              className="w-full py-3 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
             >
               Create New Order
             </button>
@@ -300,17 +316,28 @@ function PaymentPageContent() {
                 <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700">
                     <div className="text-xs text-slate-400 uppercase font-semibold mb-1">Customer</div>
                     <div className="text-white font-medium">
-                      {orderData.customer.firstname} {orderData.customer.lastname}
+                      {orderData.customer_name}
                     </div>
-                    <div className="text-sm text-slate-400 mt-1">{orderData.customer.email}</div>
+                    <div className="text-sm text-slate-400 mt-1">{orderData.customer_email}</div>
+                    <div className="text-sm text-slate-400">{orderData.customer_phone}</div>
                 </div>
 
+                {/* Address */}
+                {orderData.customer_address && (
+                  <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700">
+                      <div className="text-xs text-slate-400 uppercase font-semibold mb-1">Shipping Address</div>
+                      <div className="text-white font-medium">
+                        {orderData.customer_address}
+                      </div>
+                  </div>
+                )}
+
                 {/* Vehicle */}
-                {orderData.vehicle && (orderData.vehicle.year !== 'N/A' || orderData.vehicle.make !== 'N/A' || orderData.vehicle.model !== 'N/A') && (
+                {orderData.products && orderData.products.length > 0 && orderData.products[0].make && (
                   <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700">
                       <div className="text-xs text-slate-400 uppercase font-semibold mb-1">Vehicle</div>
                       <div className="text-white font-medium">
-                        {orderData.vehicle.year} {orderData.vehicle.make} {orderData.vehicle.model}
+                        {orderData.products[0].year} {orderData.products[0].make} {orderData.products[0].model}
                       </div>
                   </div>
                 )}
