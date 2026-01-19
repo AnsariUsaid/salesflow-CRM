@@ -66,7 +66,7 @@ function OrderDetailContent({ orderId }: { orderId: string }) {
       await updateOrderStatus({
         variables: {
           order_id: orderId,
-          order_status: newStatus.toUpperCase(),
+          order_status: newStatus.toLowerCase(),
         },
       });
       alert('Order status updated successfully!');
@@ -182,7 +182,7 @@ function OrderDetailContent({ orderId }: { orderId: string }) {
                   <label className="text-sm font-medium text-gray-500 flex items-center gap-1">
                     <MapPin size={14} /> Address
                   </label>
-                  <p className="text-gray-900">{order.customer_address || 'N/A'}</p>
+                  <p className="text-gray-900">{order.shipping_address || 'N/A'}</p>
                 </div>
               </div>
             </div>
@@ -288,7 +288,7 @@ function OrderDetailContent({ orderId }: { orderId: string }) {
                   <div>
                     <p className="text-xs text-gray-500">Created</p>
                     <p className="text-sm text-gray-900">
-                      {new Date(order.created_at).toLocaleString()}
+                      {new Date(order.createdAt).toLocaleString()}
                     </p>
                   </div>
                 </div>

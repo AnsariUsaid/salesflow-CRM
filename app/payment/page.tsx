@@ -178,7 +178,7 @@ function PaymentPageContent() {
         await updateOrderStatus({
           variables: {
             order_id: orderData.order_id,
-            order_status: 'PAID',
+            order_status: 'paid',
           },
         });
 

@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { OrderProduct, Product, Order } from '@/types';
 import { GET_PRODUCTS, GET_ORDERS } from '@/graphql/queries';
-import { CREATE_ORDER } from '@/graphql/mutations';
+import { CREATE_ORDER, CREATE_PRODUCT } from '@/graphql/mutations';
 
 export default function OrdersPage() {
   const { isLoaded, isSignedIn, user } = useUser();
@@ -50,9 +50,10 @@ function OrdersPageContent({ user }: { user: any }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   
   // Fetch products and orders using GraphQL
-  const { data: productsData, loading: productsLoading } = useQuery(GET_PRODUCTS);
+  const { data: productsData, loading: productsLoading, refetch: refetchProducts } = useQuery(GET_PRODUCTS);
   const { data: ordersData, loading: ordersLoading, refetch: refetchOrders } = useQuery(GET_ORDERS);
   const [createOrderMutation, { loading: isCreating }] = useMutation(CREATE_ORDER);
+  const [createProductMutation] = useMutation(CREATE_PRODUCT);
   
   const products = productsData?.products || [];
   const orders = ordersData?.orders || [];
@@ -75,6 +76,18 @@ function OrdersPageContent({ user }: { user: any }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProducts, setSelectedProducts] = useState<OrderProduct[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  
+  // New product form state
+  const [newProductForm, setNewProductForm] = useState({
+    product_name: '',
+    product_code: '',
+    description: '',
+    make: '',
+    model: '',
+    year: '',
+    price: 50.00,
+  });
+  const [showNewProductForm, setShowNewProductForm] = useState(false);
 
   // --- Handlers ---
 
@@ -86,6 +99,87 @@ function OrdersPageContent({ user }: { user: any }) {
   const handleProductSearch = (query: string) => {
     setSearchQuery(query);
     setIsSearching(!!query);
+  };
+  
+  const handleNewProductFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setNewProductForm(prev => ({ ...prev, [name]: value }));
+  };
+  
+  const handleSearchByVehicle = () => {
+    const { make, model, year } = newProductForm;
+    if (!make || !model || !year) {
+      alert('Please fill in Make, Model, and Year');
+      return;
+    }
+    
+    // Search for matching products
+    const matchingProducts = products.filter((p: Product) => 
+      p.make.toLowerCase().includes(make.toLowerCase()) &&
+      p.model.toLowerCase().includes(model.toLowerCase()) &&
+      p.year.toLowerCase().includes(year.toLowerCase())
+    );
+    
+    if (matchingProducts.length > 0) {
+      // Show search results
+      setSearchQuery(`${make} ${model} ${year}`);
+      setIsSearching(true);
+    } else {
+      // No matches, show form to add new product
+      setShowNewProductForm(true);
+    }
+  };
+  
+  const handleCreateAndAddProduct = async () => {
+    const { product_name, product_code, description, make, model, year, price } = newProductForm;
+    
+    if (!product_name || !product_code || !make || !model || !year) {
+      alert('Please fill in all required fields');
+      return;
+    }
+    
+    try {
+      const { data } = await createProductMutation({
+        variables: {
+          product_name,
+          product_code,
+          description,
+          make,
+          model,
+          year,
+        },
+      });
+      
+      if (data?.createProduct) {
+        // Add the new product to selected products
+        const newOrderProduct: OrderProduct = {
+          ...data.createProduct,
+          quantity: 1,
+          price,
+        };
+        setSelectedProducts(prev => [...prev, newOrderProduct]);
+        
+        // Reset form
+        setNewProductForm({
+          product_name: '',
+          product_code: '',
+          description: '',
+          make: '',
+          model: '',
+          year: '',
+          price: 50.00,
+        });
+        setShowNewProductForm(false);
+        
+        // Refresh products list
+        await refetchProducts();
+        
+        alert('Product created and added to order!');
+      }
+    } catch (error) {
+      console.error('Error creating product:', error);
+      alert('Failed to create product. Please try again.');
+    }
   };
 
   const addProduct = (product: Product) => {
@@ -239,12 +333,17 @@ function OrdersPageContent({ user }: { user: any }) {
     }
   };
 
-  // Filter products based on search
+  // Filter products based on search (including vehicle info)
   const filteredProducts = useMemo(() => {
     if (!searchQuery) return [];
-    return products.filter(p => 
-      p.product_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.product_code.toLowerCase().includes(searchQuery.toLowerCase())
+    const query = searchQuery.toLowerCase();
+    return products.filter((p: Product) => 
+      p.product_name.toLowerCase().includes(query) ||
+      p.product_code.toLowerCase().includes(query) ||
+      p.make.toLowerCase().includes(query) ||
+      p.model.toLowerCase().includes(query) ||
+      p.year.toLowerCase().includes(query) ||
+      `${p.make} ${p.model} ${p.year}`.toLowerCase().includes(query)
     );
   }, [searchQuery, products]);
 
@@ -403,13 +502,109 @@ function OrdersPageContent({ user }: { user: any }) {
                 <h3 className="text-lg font-semibold text-gray-800">Products</h3>
               </div>
 
-              {/* Search Bar */}
+              {/* Vehicle-Based Product Search */}
+              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <h4 className="text-sm font-semibold text-gray-700 mb-3">Find Product by Vehicle</h4>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                  <input
+                    type="text"
+                    name="make"
+                    placeholder="Make (e.g., Toyota)"
+                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                    value={newProductForm.make}
+                    onChange={handleNewProductFormChange}
+                  />
+                  <input
+                    type="text"
+                    name="model"
+                    placeholder="Model (e.g., Camry)"
+                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                    value={newProductForm.model}
+                    onChange={handleNewProductFormChange}
+                  />
+                  <input
+                    type="text"
+                    name="year"
+                    placeholder="Year (e.g., 2020)"
+                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                    value={newProductForm.year}
+                    onChange={handleNewProductFormChange}
+                  />
+                  <button
+                    onClick={handleSearchByVehicle}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
+                  >
+                    <Search size={16} /> Search
+                  </button>
+                </div>
+              </div>
+
+              {/* New Product Form (shown when no match found) */}
+              {showNewProductForm && (
+                <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-semibold text-gray-700">No matching product found - Add New Product</h4>
+                    <button
+                      onClick={() => setShowNewProductForm(false)}
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input
+                      type="text"
+                      name="product_name"
+                      placeholder="Product Name *"
+                      className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                      value={newProductForm.product_name}
+                      onChange={handleNewProductFormChange}
+                      required
+                    />
+                    <input
+                      type="text"
+                      name="product_code"
+                      placeholder="Product Code *"
+                      className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                      value={newProductForm.product_code}
+                      onChange={handleNewProductFormChange}
+                      required
+                    />
+                    <textarea
+                      name="description"
+                      placeholder="Description (optional)"
+                      className="md:col-span-2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                      value={newProductForm.description}
+                      onChange={handleNewProductFormChange}
+                      rows={2}
+                    />
+                    <input
+                      type="number"
+                      name="price"
+                      placeholder="Price *"
+                      className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                      value={newProductForm.price}
+                      onChange={handleNewProductFormChange}
+                      required
+                      step="0.01"
+                    />
+                    <button
+                      onClick={handleCreateAndAddProduct}
+                      className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
+                    >
+                      <Plus size={16} /> Add Product
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Manual Search Bar */}
               <div className="relative mb-6">
                 <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                     <input
                         type="text"
-                        placeholder="Search products by name or code..."
+                        placeholder="Or search products manually by name or code..."
                         className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                         value={searchQuery}
                         onChange={(e) => handleProductSearch(e.target.value)}
@@ -419,7 +614,7 @@ function OrdersPageContent({ user }: { user: any }) {
                 {/* Search Results Dropdown */}
                 {isSearching && filteredProducts.length > 0 && (
                     <div className="absolute z-10 w-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-60 overflow-y-auto">
-                        {filteredProducts.map(product => (
+                        {filteredProducts.map((product: Product) => (
                             <div 
                                 key={product.product_id}
                                 className="px-4 py-3 hover:bg-blue-50 cursor-pointer flex justify-between items-center border-b border-gray-100 last:border-0"
@@ -427,12 +622,18 @@ function OrdersPageContent({ user }: { user: any }) {
                             >
                                 <div>
                                     <div className="font-medium text-gray-800">{product.product_name}</div>
-                                    <div className="text-sm text-gray-500">{product.product_code} • {product.make} {product.model}</div>
+                                    <div className="text-sm text-gray-500">{product.product_code} • {product.make} {product.model} {product.year}</div>
                                 </div>
                                 <Plus size={16} className="text-blue-600" />
                             </div>
                         ))}
                     </div>
+                )}
+
+                {isSearching && filteredProducts.length === 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 p-4 text-center text-gray-500">
+                    No products found
+                  </div>
                 )}
               </div>
 

@@ -408,6 +408,9 @@ export const resolvers = {
   },
 
   Order: {
+    createdAt: (parent: any) => {
+      return parent.createdAt.toISOString();
+    },
     customer: (parent: any) => {
       return prisma.user.findUnique({
         where: { user_id: parent.user_id },

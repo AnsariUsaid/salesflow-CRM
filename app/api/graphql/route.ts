@@ -21,23 +21,16 @@ const server = new ApolloServer({
 async function context(req: NextRequest) {
   try {
     const authResult = await auth();
-    console.log('🔐 Auth result:', JSON.stringify(authResult, null, 2));
-    
     const { userId } = authResult;
     
     if (!userId) {
-      console.log('❌ No userId in auth result');
       return { user: null };
     }
-
-    console.log('✅ Found userId:', userId);
 
     // Get user from database
     const user = await prisma.user.findUnique({
       where: { clerk_user_id: userId },
     });
-
-    console.log('👤 User from DB:', user ? `${user.firstname} ${user.lastname}` : 'NOT FOUND');
 
     return { user };
   } catch (error) {
