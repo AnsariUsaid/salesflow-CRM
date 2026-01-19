@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQuery } from '@apollo/client/react';
+import { GET_ORDER, GET_USER } from '@/lib/graphql/queries';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -33,10 +35,25 @@ interface PaymentFormData {
 
 export default function PaymentPage() {
   const router = useRouter();
-  const [orderData, setOrderData] = useState<any>(null);
+  const [orderId, setOrderId] = useState<string>('');
+  const [userId, setUserId] = useState<string>('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+
+  // Fetch order and user data from backend
+  const { data: orderDataResponse, loading: orderLoading } = useQuery(GET_ORDER, {
+    variables: { id: orderId },
+    skip: !orderId,
+  });
+
+  const { data: userDataResponse, loading: userLoading } = useQuery(GET_USER, {
+    variables: { id: userId },
+    skip: !userId,
+  });
+
+  const orderData = orderDataResponse?.order;
+  const userData = userDataResponse?.user;
 
   // Form State
   const [formData, setFormData] = useState<PaymentFormData>({
@@ -58,11 +75,12 @@ export default function PaymentPage() {
     const pendingOrder = sessionStorage.getItem('pendingOrder');
     if (pendingOrder) {
       const order = JSON.parse(pendingOrder);
-      setOrderData(order);
+      setOrderId(order.orderId);
+      setUserId(order.userId);
       setFormData(prev => ({
         ...prev,
-        order_id: 'ORD-' + Math.floor(Math.random() * 10000),
-        amount: order.total_amount
+        order_id: order.orderId,
+        amount: order.totalAmount
       }));
     } else {
       // Redirect back to orders if no pending order
@@ -169,52 +187,49 @@ export default function PaymentPage() {
         {isSidebarOpen && (
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
                 
+                {/* Loading State */}
+                {(orderLoading || userLoading) && (
+                  <div className="text-center py-8">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
+                    <p className="mt-2 text-slate-400">Loading order details...</p>
+                  </div>
+                )}
+
                 {/* Customer */}
-                <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700">
-                    <div className="text-xs text-slate-400 uppercase font-semibold mb-1">Customer</div>
-                    <div className="text-white font-medium">
-                      {orderData.customer.firstname} {orderData.customer.lastname}
-                    </div>
-                    <div className="text-sm text-slate-400 mt-1">{orderData.customer.email}</div>
-                </div>
+                {userData && (
+                  <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700">
+                      <div className="text-xs text-slate-400 uppercase font-semibold mb-1">Customer</div>
+                      <div className="text-white font-medium">
+                        {userData.firstName} {userData.lastName || ''}
+                      </div>
+                      <div className="text-sm text-slate-400 mt-1">{userData.email}</div>
+                      {userData.phone && (
+                        <div className="text-sm text-slate-400">{userData.phone}</div>
+                      )}
+                  </div>
+                )}
 
-                {/* Vehicle */}
-                <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700">
-                    <div className="text-xs text-slate-400 uppercase font-semibold mb-1">Vehicle</div>
-                    <div className="text-white font-medium">
-                      {orderData.vehicle.year} {orderData.vehicle.make} {orderData.vehicle.model}
+                {/* Order Details */}
+                {orderData && (
+                  <>
+                    <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700">
+                        <div className="text-xs text-slate-400 uppercase font-semibold mb-1">Shipping Address</div>
+                        <div className="text-white text-sm">
+                          {orderData.shippingAddress}
+                        </div>
                     </div>
-                </div>
 
-                {/* Items List */}
-                <div>
-                    <div className="text-xs text-slate-400 uppercase font-semibold mb-3">
-                      Items ({orderData.products.length})
+                    {/* Totals */}
+                    <div className="border-t border-slate-700 pt-4 mt-4">
+                        <div className="flex justify-between items-end">
+                            <span className="text-slate-400 text-sm">Total Due</span>
+                            <span className="text-2xl font-bold text-blue-400">
+                              ${orderData.totalAmount?.toFixed(2)}
+                            </span>
+                        </div>
                     </div>
-                    <div className="space-y-3">
-                        {orderData.products.map((item: any, idx: number) => (
-                            <div key={idx} className="flex justify-between text-sm">
-                                <div className="flex-1">
-                                  <span className="text-slate-300">{item.product_name}</span>
-                                  <div className="text-xs text-slate-500">Qty: {item.quantity}</div>
-                                </div>
-                                <span className="text-white font-mono">
-                                  ${(item.price * item.quantity).toFixed(2)}
-                                </span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Totals */}
-                <div className="border-t border-slate-700 pt-4 mt-4">
-                    <div className="flex justify-between items-end">
-                        <span className="text-slate-400 text-sm">Total Due</span>
-                        <span className="text-2xl font-bold text-blue-400">
-                          ${orderData.total_amount.toFixed(2)}
-                        </span>
-                    </div>
-                </div>
+                  </>
+                )}
             </div>
         )}
       </aside>

@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { useQuery } from '@apollo/client/react';
+import { useQuery, useMutation } from '@apollo/client/react';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -16,18 +16,29 @@ import {
   ShoppingCart,
 } from 'lucide-react';
 import { OrderProduct, Product, Order } from '@/types';
-import { GET_PRODUCTS, GET_ORDERS } from '@/lib/graphql/queries';
+import { GET_PRODUCTS, GET_ORDERS, GET_ORGANIZATIONS, CREATE_USER, CREATE_ORDER } from '@/lib/graphql/queries';
 
 export default function OrdersPage() {
   const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   
-  // Fetch products and orders from database
+  // Fetch products, orders, and organizations from database
   const { data: productsData, loading: productsLoading } = useQuery(GET_PRODUCTS);
   const { data: ordersData, loading: ordersLoading } = useQuery(GET_ORDERS);
+  const { data: organizationsData } = useQuery(GET_ORGANIZATIONS);
   
   const dbProducts = productsData?.products || [];
   const dbOrders = ordersData?.orders || [];
+  const organizations = organizationsData?.organizations || [];
+  
+  // Get first organization ID (or you can let user select)
+  const defaultOrgId = organizations[0]?.id || '';
+  
+  // Mutations
+  const [createUser] = useMutation(CREATE_USER);
+  const [createOrder] = useMutation(CREATE_ORDER, {
+    refetchQueries: [{ query: GET_ORDERS }],
+  });
   
   // Form States
   const [formData, setFormData] = useState({
@@ -103,33 +114,78 @@ export default function OrdersPage() {
     return selectedProducts.reduce((acc, curr) => acc + (curr.price * curr.quantity), 0);
   };
 
-  const handleCreateOrder = () => {
+  const handleCreateOrder = async () => {
     if (selectedProducts.length === 0) {
       alert('Please add at least one product');
       return;
     }
     
-    const orderData = {
-      customer: {
-        firstname: formData.firstname,
-        lastname: formData.lastname,
-        email: formData.email,
-        phone: formData.phone,
-        address: formData.address,
-        city: formData.city,
-        state: formData.state,
-      },
-      vehicle: {
-        make: formData.vehicleMake,
-        model: formData.vehicleModel,
-        year: formData.vehicleYear,
-      },
-      products: selectedProducts,
-      total_amount: calculateTotal(),
-    };
+    if (!formData.firstname || !formData.email || !formData.address) {
+      alert('Please fill in required customer information');
+      return;
+    }
     
-    sessionStorage.setItem('pendingOrder', JSON.stringify(orderData));
-    router.push('/payment');
+    if (!defaultOrgId) {
+      alert('No organization found. Please create an organization first.');
+      return;
+    }
+    
+    try {
+      // Step 1: Create user with CUSTOMER role
+      const { data: userData } = await createUser({
+        variables: {
+          input: {
+            orgId: defaultOrgId,
+            firstName: formData.firstname,
+            lastName: formData.lastname || null,
+            email: formData.email,
+            phone: formData.phone || null,
+            address: formData.address,
+            city: formData.city || null,
+            state: formData.state || null,
+            country: null,
+            pincode: null,
+            role: 'CUSTOMER',
+          },
+        },
+      });
+      
+      const newUserId = userData?.createUser?.id;
+      
+      if (!newUserId) {
+        alert('Failed to create customer');
+        return;
+      }
+      
+      // Step 2: Create order for the new customer
+      const { data: orderData } = await createOrder({
+        variables: {
+          input: {
+            userId: newUserId,
+            orgId: defaultOrgId,
+            totalAmount: calculateTotal(),
+            discountedAmount: null,
+            shippingAddress: `${formData.address}, ${formData.city}, ${formData.state}`,
+            salesAgentId: null,
+            orderStatus: 'PENDING',
+          },
+        },
+      });
+      
+      if (orderData?.createOrder?.id) {
+        alert('Order created successfully!');
+        // Store order data for payment page
+        sessionStorage.setItem('pendingOrder', JSON.stringify({
+          orderId: orderData.createOrder.id,
+          userId: newUserId,
+          totalAmount: calculateTotal(),
+        }));
+        router.push('/payment');
+      }
+    } catch (error: any) {
+      console.error('Error creating order:', error);
+      alert(`Failed to create order: ${error.message}`);
+    }
   };
 
   // Filter products based on search
