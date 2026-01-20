@@ -84,7 +84,7 @@ export default function PaymentPage() {
       }));
     } else {
       // Redirect back to orders if no pending order
-      router.push('/orders');
+      router.push('/newOrder');
     }
   }, [router]);
 
@@ -144,7 +144,7 @@ export default function PaymentPage() {
             Amount: <span className="font-semibold text-gray-800">${formData.amount.toFixed(2)}</span>
           </p>
           <button 
-            onClick={() => router.push('/orders')} 
+            onClick={() => router.push('/newOrder')} 
             className="w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
           >
             Create New Order

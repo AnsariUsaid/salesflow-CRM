@@ -14,6 +14,38 @@ export const GET_ORGANIZATIONS = gql`
   }
 `;
 
+export const GET_ORGANIZATION_WITH_DETAILS = gql`
+  query GetOrganizationWithDetails {
+    organizations {
+      id
+      orgName
+      orgEmail
+      numUsers
+      isActive
+      createdAt
+      users {
+        id
+        firstName
+        lastName
+        email
+        role
+      }
+      orders {
+        id
+        totalAmount
+        discountedAmount
+        orderStatus
+        createdAt
+        user {
+          id
+          firstName
+          lastName
+        }
+      }
+    }
+  }
+`;
+
 export const GET_ORGANIZATION = gql`
   query GetOrganization($id: ID!) {
     organization(id: $id) {
