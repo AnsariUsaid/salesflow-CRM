@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useQuery } from "@apollo/client/react";
 import { UserButton } from "@clerk/nextjs";
-import { PlusCircle, Package, MoreVertical } from "lucide-react";
+import { PlusCircle, Package, MoreVertical, List } from "lucide-react";
 import { GET_ORDERS } from "@/lib/graphql/queries";
 import { DashboardStats } from "@/components/DashboardStats";
 
@@ -60,10 +60,11 @@ export default function Home() {
             </Link>
 
             <Link
-              href="/payment"
-              className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors shadow-sm"
+              href="/existingOrders"
+              className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors flex items-center gap-2 shadow-sm"
             >
-              Process Payment
+              <List size={16} />
+              Check Existing Orders
             </Link>
 
             <UserButton afterSignOutUrl="/sign-in" />

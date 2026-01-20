@@ -144,6 +144,20 @@ export const GET_ORDERS = gql`
   }
 `;
 
+export const GET_ORGANIZATION_ORDERS = gql`
+  query GetOrganizationOrders {
+    orders {
+      id
+      totalAmount
+      shippingAddress
+      orderStatus
+      user {
+        email
+      }
+    }
+  }
+`;
+
 export const GET_ORDER = gql`
   query GetOrder($id: ID!) {
     order(id: $id) {

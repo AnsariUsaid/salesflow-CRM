@@ -1,35 +1,15 @@
 "use client";
 
 import { useQuery } from "@apollo/client/react";
-import { GET_ORDERS } from "@/lib/graphql/queries";
-import Link from "next/link";
-import { 
-  Package, 
-  Eye, 
-  ArrowLeft,
-  AlertCircle 
-} from "lucide-react";
+import { GET_ORGANIZATION_ORDERS } from "@/lib/graphql/queries";
+import { useRouter } from "next/navigation";
+import { CreditCard, AlertCircle, Package } from "lucide-react";
 
-export default function ExistingOrdersPage() {
-  const { data, loading, error } = useQuery(GET_ORDERS);
+export default function ExistingOrderPage() {
+  const router = useRouter();
+  const { data, loading, error } = useQuery(GET_ORGANIZATION_ORDERS);
 
   const orders = data?.orders || [];
-
-  // Format date helper
-  const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    } catch {
-      return 'N/A';
-    }
-  };
 
   // Status badge color helper
   const getStatusColor = (status: string) => {
@@ -43,35 +23,27 @@ export default function ExistingOrdersPage() {
     return colors[status] || "bg-gray-100 text-gray-800 border-gray-200";
   };
 
+  const handleProcessPayment = (order: any) => {
+    // Store order data in session storage for payment page
+    sessionStorage.setItem('pendingOrder', JSON.stringify({
+      orderId: order.id,
+      totalAmount: order.totalAmount,
+      customerEmail: order.user?.email
+    }));
+    router.push('/payment');
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="p-8 max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-4"
-          >
-            <ArrowLeft size={16} />
-            Back to Dashboard
-          </Link>
-          <div className="flex justify-between items-end">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
-                <Package size={32} />
-                Existing Orders
-              </h1>
-              <p className="text-gray-500 mt-1">
-                View and manage all orders in your organization
-              </p>
-            </div>
-            <Link
-              href="/newOrder"
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-            >
-              Create New Order
-            </Link>
-          </div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Existing Orders
+          </h1>
+          <p className="text-gray-600">
+            View all orders and process payments
+          </p>
         </div>
 
         {/* Loading State */}
@@ -104,135 +76,77 @@ export default function ExistingOrdersPage() {
                 <h3 className="text-xl font-semibold text-gray-800 mb-2">
                   No Orders Yet
                 </h3>
-                <p className="text-gray-600 mb-6">
-                  Create your first order to get started
+                <p className="text-gray-600">
+                  No orders found in the system
                 </p>
-                <Link
-                  href="/newOrder"
-                  className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
-                >
-                  Create Order
-                </Link>
               </div>
             ) : (
-              <>
-                {/* Table Header */}
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-gray-50 border-b border-gray-200">
-                      <tr>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                          Order ID
-                        </th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                          User Email
-                        </th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                          Shipping Address
-                        </th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                          Time of Ordering
-                        </th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                          Status
-                        </th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                          Total Amount
-                        </th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                          Action
-                        </th>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-gray-50 border-b border-gray-200">
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        Order ID
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        User Email
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        Shipping Address
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        Total Amount
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        Order Status
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        Action
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {orders.map((order: any) => (
+                      <tr key={order.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="text-sm font-medium text-gray-900">
+                            {order.id}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="text-sm text-gray-600">
+                            {order.user?.email || 'N/A'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-sm text-gray-600">
+                            {order.shippingAddress || 'N/A'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="text-sm font-semibold text-gray-900">
+                            ${order.totalAmount?.toFixed(2) || '0.00'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusColor(order.orderStatus)}`}>
+                            {order.orderStatus}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <button
+                            onClick={() => handleProcessPayment(order)}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                          >
+                            <CreditCard size={16} />
+                            Process Payment
+                          </button>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
-                      {orders.map((order: any) => (
-                        <tr
-                          key={order.id}
-                          className="hover:bg-gray-50 transition-colors"
-                        >
-                          {/* Order ID */}
-                          <td className="px-6 py-4">
-                            <div className="flex items-center">
-                              <code className="text-sm font-mono text-gray-900 bg-gray-100 px-2 py-1 rounded">
-                                {order.id.slice(0, 8)}...
-                              </code>
-                            </div>
-                          </td>
-
-                          {/* User Email */}
-                          <td className="px-6 py-4">
-                            <div className="text-sm text-gray-900">
-                              {order.user?.email || 'N/A'}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              {order.user?.firstName} {order.user?.lastName}
-                            </div>
-                          </td>
-
-                          {/* Shipping Address */}
-                          <td className="px-6 py-4">
-                            <div className="text-sm text-gray-900 max-w-xs truncate">
-                              {order.shippingAddress}
-                            </div>
-                          </td>
-
-                          {/* Time of Ordering */}
-                          <td className="px-6 py-4">
-                            <div className="text-sm text-gray-900">
-                              {formatDate(order.createdAt)}
-                            </div>
-                          </td>
-
-                          {/* Status */}
-                          <td className="px-6 py-4">
-                            <span
-                              className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(
-                                order.orderStatus
-                              )}`}
-                            >
-                              {order.orderStatus}
-                            </span>
-                          </td>
-
-                          {/* Total Amount */}
-                          <td className="px-6 py-4">
-                            <div className="text-sm font-semibold text-gray-900">
-                              ${order.totalAmount?.toFixed(2) || '0.00'}
-                            </div>
-                            {order.discountedAmount && (
-                              <div className="text-xs text-gray-500 line-through">
-                                ${order.discountedAmount.toFixed(2)}
-                              </div>
-                            )}
-                          </td>
-
-                          {/* Action Button */}
-                          <td className="px-6 py-4">
-                            <button
-                              onClick={() => {
-                                // TODO: Implement view order details
-                                alert(`View details for order: ${order.id}`);
-                              }}
-                              className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors border border-blue-200"
-                            >
-                              <Eye size={16} />
-                              View
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Table Footer with Count */}
-                <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
-                  <p className="text-sm text-gray-600">
-                    Showing <span className="font-semibold">{orders.length}</span>{" "}
-                    order{orders.length !== 1 ? "s" : ""}
-                  </p>
-                </div>
-              </>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
         )}
