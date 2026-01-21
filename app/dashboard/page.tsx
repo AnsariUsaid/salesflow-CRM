@@ -27,6 +27,7 @@ export default function DashboardPage() {
   const [dashboardStats, setDashboardStats] = useState<DashboardStats[]>([]);
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [pendingReviews, setPendingReviews] = useState<any[]>([]);
+  const [pendingPaymentsCount, setPendingPaymentsCount] = useState(0);
 
   // Redirect if not signed in
   useEffect(() => {
@@ -59,7 +60,19 @@ export default function DashboardPage() {
     fetch('/api/pending-review')
       .then(res => res.json())
       .then(data => {
-        setPendingReviews(data);
+        // Handle both old and new API response formats
+        if (Array.isArray(data)) {
+          setPendingReviews(data);
+          setPendingPaymentsCount(data.length);
+        } else {
+          setPendingReviews(data.orders || []);
+          setPendingPaymentsCount(data.totalCount || 0);
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching pending reviews:', error);
+        setPendingReviews([]);
+        setPendingPaymentsCount(0);
       });
   }, [isSignedIn]);
 
@@ -242,19 +255,24 @@ export default function DashboardPage() {
                <LayoutDashboard className="absolute -bottom-4 -right-4 text-white/5 w-32 h-32" />
             </div>
 
-            {/* Pending Reviews */}
+            {/* Pending Payments */}
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-               <h3 className="font-bold text-gray-800 mb-4">Pending Review</h3>
+               <div className="flex justify-between items-center mb-4">
+                 <h3 className="font-bold text-gray-800">Pending Payments</h3>
+                 <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-red-100 text-red-600">
+                   {pendingPaymentsCount} Total
+                 </span>
+               </div>
                <ul className="space-y-3">
-                  {pendingReviews.map(order => (
+                  {Array.isArray(pendingReviews) && pendingReviews.map(order => (
                     <li key={order.order_id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-600">
+                        <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-xs font-bold text-red-600">
                           {order.customer.firstname.charAt(0)}{order.customer.lastname.charAt(0)}
                         </div>
                         <div className="text-sm">
                           <p className="font-medium text-gray-700">Order #{order.order_id.substring(0, 7)}</p>
-                          <p className="text-xs text-gray-400">Awaiting payment</p>
+                          <p className="text-xs text-red-500 font-semibold">${order.total_amount.toFixed(2)}</p>
                         </div>
                       </div>
                       <ChevronRight size={16} className="text-gray-400" />

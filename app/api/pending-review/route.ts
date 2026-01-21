@@ -25,19 +25,27 @@ export async function GET() {
       where: {
         org_id: user.org_id,
         payment_status: 'unpaid',
-        transactions: {
-          none: {
-            status: 'completed',
-          },
-        },
       },
       include: {
         customer: true,
       },
+      orderBy: {
+        total_amount: 'desc',
+      },
       take: 5,
     });
 
-    return NextResponse.json(pendingOrders);
+    const totalCount = await prisma.order.count({
+      where: {
+        org_id: user.org_id,
+        payment_status: 'unpaid',
+      },
+    });
+
+    return NextResponse.json({
+      orders: pendingOrders,
+      totalCount,
+    });
   } catch (error) {
     console.error(error);
     return new NextResponse('Internal Server Error', { status: 500 });
