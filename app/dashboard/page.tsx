@@ -43,7 +43,7 @@ export default function DashboardPage() {
           { label: 'Total Revenue', value: `$${(data.totalRevenue || 0).toLocaleString()}`, change: '+12.5%', icon: DASHBOARD_STATS_ICONS.TrendingUp, color: 'text-green-600', bg: 'bg-green-100' },
           { label: 'Active Orders', value: data.activeOrders, change: '+4', icon: DASHBOARD_STATS_ICONS.Package, color: 'text-blue-600', bg: 'bg-blue-100' },
           { label: 'New Customers', value: data.newCustomers, change: '+2.4%', icon: DASHBOARD_STATS_ICONS.Users, color: 'text-purple-600', bg: 'bg-purple-100' },
-          { label: 'Pending Process', value: data.pendingProcess, change: '-2', icon: DASHBOARD_STATS_ICONS.Clock, color: 'text-orange-600', bg: 'bg-orange-100' },
+          { label: 'Pending Orders', value: data.pendingProcess, change: '-2', icon: DASHBOARD_STATS_ICONS.Clock, color: 'text-orange-600', bg: 'bg-orange-100' },
         ];
         setDashboardStats(stats);
       });
