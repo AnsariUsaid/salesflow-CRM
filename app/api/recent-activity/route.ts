@@ -30,15 +30,15 @@ export async function GET() {
         createdAt: 'desc',
       },
       include: {
-        customer: true,
+        salesUser: true,
       },
     });
 
     const formattedActivity = recentActivity.map((activity) => ({
       id: activity.order_id,
-      user: activity.customer ? activity.customer.firstname + ' ' + activity.customer.lastname : 'Unknown User',
-      action: 'Created new order',
-      target: `#ORD-${activity.order_id}`,
+      salesAgent: activity.salesUser ? `${activity.salesUser.firstname} ${activity.salesUser.lastname}` : 'Unknown Agent',
+      amount: activity.total_amount,
+      orderId: activity.order_id.substring(0, 12),
       time: timeSince(activity.createdAt),
       status: 'created',
     }));
