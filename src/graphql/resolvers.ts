@@ -174,6 +174,37 @@ export const resolvers = {
 
   Mutation: {
     // User mutations
+    createUser: async (_: any, args: any, context: any) => {
+      if (!context.user) throw new GraphQLError('Not authenticated');
+
+      const { firstname, lastname, email, phone, address, city, state, role } = args;
+
+      // Check if user with email already exists
+      const existingUser = await prisma.user.findUnique({
+        where: { email },
+      });
+
+      if (existingUser) {
+        throw new GraphQLError('User with this email already exists');
+      }
+
+      // Create user with role customer by default
+      return prisma.user.create({
+        data: {
+          clerk_user_id: `customer_${Date.now()}`, // Temporary clerk_user_id for customers
+          org_id: context.user.org_id,
+          firstname,
+          lastname,
+          email,
+          phone,
+          address,
+          city,
+          state,
+          role: role || 'customer',
+        },
+      });
+    },
+
     updateUser: async (_: any, args: any, context: any) => {
       if (!context.user) throw new GraphQLError('Not authenticated');
 

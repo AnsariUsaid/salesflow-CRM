@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { useQuery } from '@apollo/client/react';
-import { Search, Package, ArrowLeft } from 'lucide-react';
+import { Search, Package, ArrowLeft, CreditCard, Home, PlusCircle } from 'lucide-react';
 import { GET_ORDERS } from '@/graphql/queries';
 
 export default function OrdersListPage() {
@@ -61,6 +61,12 @@ function OrdersListContent() {
     }
   };
 
+  // Handle process payment
+  const handleProcessPayment = (e: React.MouseEvent, orderId: string) => {
+    e.stopPropagation();
+    router.push(`/payment?orderId=${orderId}`);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Header */}
@@ -68,19 +74,29 @@ function OrdersListContent() {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <button
-                onClick={() => router.push('/')}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <ArrowLeft size={20} className="text-gray-600" />
-              </button>
               <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
                 <Package className="text-blue-600" size={28} />
                 Orders List
               </h1>
             </div>
-            <div className="text-sm text-gray-600">
-              Total Orders: <span className="font-semibold text-gray-800">{orders.length}</span>
+            <div className="flex items-center gap-3">
+              <div className="text-sm text-gray-600 mr-2">
+                Total Orders: <span className="font-semibold text-gray-800">{orders.length}</span>
+              </div>
+              <button
+                onClick={() => router.push('/')}
+                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm flex items-center gap-2"
+              >
+                <Home size={16} />
+                Back to Home
+              </button>
+              <button
+                onClick={() => router.push('/orders')}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-all flex items-center gap-2 shadow-lg shadow-blue-600/30 hover:shadow-xl"
+              >
+                <PlusCircle size={16} />
+                Create New Order
+              </button>
             </div>
           </div>
         </div>
@@ -141,6 +157,9 @@ function OrdersListContent() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Date
                     </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -167,6 +186,15 @@ function OrdersListContent() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <button
+                          onClick={(e) => handleProcessPayment(e, order.order_id)}
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm hover:shadow-md"
+                        >
+                          <CreditCard size={16} />
+                          Process Payment
+                        </button>
                       </td>
                     </tr>
                   ))}

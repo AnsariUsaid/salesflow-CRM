@@ -189,6 +189,17 @@ export const typeDefs = `#graphql
   # Mutations
   type Mutation {
     # User mutations
+    createUser(
+      firstname: String!
+      lastname: String!
+      email: String!
+      phone: String
+      address: String
+      city: String
+      state: String
+      role: UserRole
+    ): User!
+
     updateUser(
       user_id: ID!
       firstname: String

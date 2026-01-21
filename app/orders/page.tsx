@@ -15,10 +15,11 @@ import {
   User as UserIcon, 
   Truck, 
   ShoppingCart,
+  UserPlus,
 } from 'lucide-react';
 import { OrderProduct, Product, Order } from '@/types';
 import { GET_PRODUCTS, GET_ORDERS } from '@/graphql/queries';
-import { CREATE_ORDER, CREATE_PRODUCT } from '@/graphql/mutations';
+import { CREATE_ORDER, CREATE_PRODUCT, CREATE_USER } from '@/graphql/mutations';
 
 export default function OrdersPage() {
   const { isLoaded, isSignedIn, user } = useUser();
@@ -54,6 +55,7 @@ function OrdersPageContent({ user }: { user: any }) {
   const { data: ordersData, loading: ordersLoading, refetch: refetchOrders } = useQuery(GET_ORDERS);
   const [createOrderMutation, { loading: isCreating }] = useMutation(CREATE_ORDER);
   const [createProductMutation] = useMutation(CREATE_PRODUCT);
+  const [createUserMutation, { loading: isCreatingCustomer }] = useMutation(CREATE_USER);
   
   const products = productsData?.products || [];
   const orders = ordersData?.orders || [];
@@ -219,6 +221,49 @@ function OrdersPageContent({ user }: { user: any }) {
 
   const calculateTotal = () => {
     return selectedProducts.reduce((acc, curr) => acc + (curr.price * curr.quantity), 0);
+  };
+
+  const handleAddCustomer = async () => {
+    // Validate customer fields
+    if (!formData.firstname || !formData.lastname || !formData.email) {
+      alert('Please fill in at least firstname, lastname, and email');
+      return;
+    }
+
+    try {
+      const { data } = await createUserMutation({
+        variables: {
+          firstname: formData.firstname,
+          lastname: formData.lastname,
+          email: formData.email,
+          phone: formData.phone,
+          address: formData.address,
+          city: formData.city,
+          state: formData.state,
+          role: 'customer',
+        },
+      });
+
+      if (data?.createUser) {
+        alert(`Customer ${data.createUser.firstname} ${data.createUser.lastname} added successfully!`);
+        // Clear form
+        setFormData({
+          firstname: '',
+          lastname: '',
+          email: '',
+          phone: '',
+          address: '',
+          city: '',
+          state: '',
+          vehicleMake: '',
+          vehicleModel: '',
+          vehicleYear: '',
+        });
+      }
+    } catch (error: any) {
+      alert(`Failed to add customer: ${error.message}`);
+      console.error('Add customer error:', error);
+    }
   };
 
   const handleCreateOrder = async () => {
@@ -463,9 +508,19 @@ function OrdersPageContent({ user }: { user: any }) {
             
             {/* 1. Customer Information */}
             <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center gap-2 mb-6 border-b border-gray-100 pb-2">
-                <UserIcon className="text-blue-600" size={20} />
-                <h3 className="text-lg font-semibold text-gray-800">Customer Information</h3>
+              <div className="flex items-center justify-between mb-6 border-b border-gray-100 pb-2">
+                <div className="flex items-center gap-2">
+                  <UserIcon className="text-blue-600" size={20} />
+                  <h3 className="text-lg font-semibold text-gray-800">Customer Information</h3>
+                </div>
+                <button
+                  onClick={handleAddCustomer}
+                  disabled={isCreatingCustomer}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <UserPlus size={16} />
+                  {isCreatingCustomer ? 'Adding...' : 'Add Customer'}
+                </button>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -188,6 +188,36 @@ export const RESOLVE_TICKET = gql`
 `;
 
 // User Mutations
+export const CREATE_USER = gql`
+  mutation CreateUser(
+    $firstname: String!
+    $lastname: String!
+    $email: String!
+    $phone: String
+    $address: String
+    $city: String
+    $state: String
+    $role: UserRole
+  ) {
+    createUser(
+      firstname: $firstname
+      lastname: $lastname
+      email: $email
+      phone: $phone
+      address: $address
+      city: $city
+      state: $state
+      role: $role
+    ) {
+      user_id
+      firstname
+      lastname
+      email
+      role
+    }
+  }
+`;
+
 export const UPDATE_USER = gql`
   mutation UpdateUser(
     $user_id: ID!

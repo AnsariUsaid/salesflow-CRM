@@ -11,7 +11,8 @@ import {
   Clock,
   ArrowUpRight,
   MoreVertical,
-  ChevronRight
+  ChevronRight,
+  List
 } from 'lucide-react';
 import { SignedIn, SignedOut, SignInButton, UserButton, useUser } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
@@ -114,6 +115,12 @@ export default function Home() {
                 <TrendingUp size={16} />
                 View Reports
               </button>
+              <Link 
+                href="/orders-list"
+                className="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm flex items-center gap-2"
+              >
+                <List size={16} /> Existing Orders
+              </Link>
               <Link 
                 href="/orders"
                 className="px-5 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-all flex items-center gap-2 shadow-lg shadow-blue-600/30 hover:shadow-xl"
