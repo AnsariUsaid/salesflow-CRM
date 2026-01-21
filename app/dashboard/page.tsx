@@ -177,7 +177,12 @@ export default function DashboardPage() {
           <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col">
             <div className="p-6 border-b border-gray-100 flex justify-between items-center">
               <h3 className="font-bold text-gray-800">Recent Activity</h3>
-              <button className="text-blue-600 text-sm font-medium hover:underline">View All</button>
+              <button 
+                onClick={() => router.push('/orders-list')}
+                className="text-blue-600 text-sm font-medium hover:underline"
+              >
+                View All
+              </button>
             </div>
             <div className="p-6">
               <div className="space-y-6">
@@ -188,7 +193,7 @@ export default function DashboardPage() {
                     }`} />
                     <div className="flex-1">
                       <p className="text-sm text-gray-800">
-                        <span className="font-semibold">{item.user}</span> {item.action} <span className="font-mono bg-gray-100 px-1 rounded">{item.target}</span>
+                        <span className="font-semibold">{item.salesAgent}</span> created new Order <span className="font-semibold text-green-600">${(item.amount || 0).toFixed(2)}</span> <span className="font-mono bg-gray-100 px-1 rounded text-xs">#{item.orderId}...</span>
                       </p>
                       <p className="text-xs text-gray-400 mt-1">{item.time}</p>
                     </div>

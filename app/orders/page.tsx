@@ -82,9 +82,6 @@ function OrdersPageContent({ user }: { user: any }) {
     address: "",
     city: "",
     state: "",
-    vehicleMake: "",
-    vehicleModel: "",
-    vehicleYear: "",
   });
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -291,9 +288,6 @@ function OrdersPageContent({ user }: { user: any }) {
           address: "",
           city: "",
           state: "",
-          vehicleMake: "",
-          vehicleModel: "",
-          vehicleYear: "",
         });
       }
     } catch (error: any) {
@@ -351,15 +345,6 @@ function OrdersPageContent({ user }: { user: any }) {
       return;
     }
 
-    if (
-      !formData.vehicleMake ||
-      !formData.vehicleModel ||
-      !formData.vehicleYear
-    ) {
-      alert("Please fill in all vehicle information fields");
-      return;
-    }
-
     const customer_name = `${formData.firstname} ${formData.lastname}`;
     const shipping_address = `${formData.address}, ${formData.city}, ${formData.state}`;
 
@@ -368,9 +353,9 @@ function OrdersPageContent({ user }: { user: any }) {
       product_id: p.product_id,
       product_name: p.product_name,
       product_code: p.product_code,
-      make: formData.vehicleMake,
-      model: formData.vehicleModel,
-      year: formData.vehicleYear,
+      make: p.make,
+      model: p.model,
+      year: p.year,
       quantity: p.quantity,
       price: p.price,
     }));
@@ -424,9 +409,6 @@ function OrdersPageContent({ user }: { user: any }) {
             address: "",
             city: "",
             state: "",
-            vehicleMake: "",
-            vehicleModel: "",
-            vehicleYear: "",
           });
           setSelectedProducts([]);
         }
@@ -700,44 +682,7 @@ function OrdersPageContent({ user }: { user: any }) {
               </div>
             </section>
 
-            {/* 2. Vehicle Information */}
-            <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center gap-2 mb-6 border-b border-gray-100 pb-2">
-                <Truck className="text-blue-600" size={20} />
-                <h3 className="text-lg font-semibold text-gray-800">
-                  Vehicle Information
-                </h3>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <InputField
-                  label="Make"
-                  name="vehicleMake"
-                  placeholder="e.g., Toyota"
-                  value={formData.vehicleMake}
-                  onChange={handleInputChange}
-                  required
-                />
-                <InputField
-                  label="Model"
-                  name="vehicleModel"
-                  placeholder="e.g., Camry"
-                  value={formData.vehicleModel}
-                  onChange={handleInputChange}
-                  required
-                />
-                <InputField
-                  label="Year"
-                  name="vehicleYear"
-                  placeholder="e.g., 2020"
-                  value={formData.vehicleYear}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-            </section>
-
-            {/* 3. Products Section */}
+            {/* 2. Products Section */}
             <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <div className="flex items-center gap-2 mb-6 border-b border-gray-100 pb-2">
                 <ShoppingCart className="text-blue-600" size={20} />
