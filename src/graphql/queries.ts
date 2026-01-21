@@ -163,3 +163,50 @@ export const GET_MY_TICKETS = gql`
     }
   }
 `;
+
+// Processing Agent Queries
+export const GET_AVAILABLE_ORDERS_FOR_PROCESSING = gql`
+  query GetAvailableOrdersForProcessing {
+    availableOrdersForProcessing {
+      order_id
+      customer_name
+      customer_email
+      customer_phone
+      payment_status
+      fulfillment_status
+      total_amount
+      createdAt
+      processing_agent
+      processingUser {
+        user_id
+        firstname
+        lastname
+      }
+    }
+  }
+`;
+
+export const GET_MY_PROCESSING_ORDERS = gql`
+  query GetMyProcessingOrders {
+    myProcessingOrders {
+      order_id
+      customer_name
+      customer_email
+      customer_phone
+      payment_status
+      fulfillment_status
+      total_amount
+      createdAt
+      orderProducts {
+        orderproduct_id
+        product_name
+        product_code
+        make
+        model
+        year
+        quantity
+        price
+      }
+    }
+  }
+`;

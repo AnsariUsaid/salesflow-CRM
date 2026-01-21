@@ -136,6 +136,7 @@ export const typeDefs = `#graphql
     createdAt: String!
     updatedAt: String!
     customer: User
+    processingUser: User
     orderProducts: [OrderProduct!]!
     transactions: [Transaction!]!
   }
@@ -193,6 +194,8 @@ export const typeDefs = `#graphql
     orders: [Order!]!
     order(order_id: ID!): Order
     myOrders: [Order!]!
+    availableOrdersForProcessing: [Order!]!
+    myProcessingOrders: [Order!]!
 
     # Transaction queries
     transactions: [Transaction!]!

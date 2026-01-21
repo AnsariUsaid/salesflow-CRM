@@ -184,6 +184,42 @@ export const resolvers = {
         orderBy: { createdAt: 'desc' },
       });
     },
+
+    // Processing agent queries
+    availableOrdersForProcessing: async (_: any, __: any, context: any) => {
+      if (!context.user) throw new GraphQLError('Not authenticated');
+
+      return prisma.order.findMany({
+        where: {
+          org_id: context.user.org_id,
+          fulfillment_status: {
+            notIn: ['closed', 'cancelled'], // Still active
+          },
+        },
+        include: {
+          processingUser: {
+            select: {
+              user_id: true,
+              firstname: true,
+              lastname: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+    },
+
+    myProcessingOrders: async (_: any, __: any, context: any) => {
+      if (!context.user) throw new GraphQLError('Not authenticated');
+
+      return prisma.order.findMany({
+        where: {
+          org_id: context.user.org_id,
+          processing_agent: context.user.user_id, // Assigned to me
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+    },
   },
 
   Mutation: {
@@ -397,19 +433,26 @@ export const resolvers = {
     assignOrderAgent: async (_: any, { order_id, agent_type, agent_id }: any, context: any) => {
       if (!context.user) throw new GraphQLError('Not authenticated');
 
-      // Only admins can assign agents
-      if (context.user.role !== 'admin') {
-        throw new GraphQLError('Not authorized');
-      }
-
       const order = await prisma.order.findUnique({ where: { order_id } });
       if (!order || order.org_id !== context.user.org_id) {
         throw new GraphQLError('Order not found');
       }
 
+      // Allow processing agents to self-assign, otherwise require admin
+      const isSelfAssign = agent_type === 'processing' && agent_id === context.user.user_id;
+      if (!isSelfAssign && context.user.role !== 'admin') {
+        throw new GraphQLError('Not authorized');
+      }
+
       const updateData: any = {};
       if (agent_type === 'sales') updateData.sales_agent = agent_id;
-      if (agent_type === 'processing') updateData.processing_agent = agent_id;
+      if (agent_type === 'processing') {
+        updateData.processing_agent = agent_id;
+        // Auto-advance fulfillment status to "processing" when agent is assigned
+        if (order.fulfillment_status === 'pending') {
+          updateData.fulfillment_status = 'processing';
+        }
+      }
       if (agent_type === 'followup') updateData.followup_agent = agent_id;
 
       return prisma.order.update({
@@ -522,6 +565,12 @@ export const resolvers = {
     customer: (parent: any) => {
       return prisma.user.findUnique({
         where: { user_id: parent.user_id },
+      });
+    },
+    processingUser: (parent: any) => {
+      if (!parent.processing_agent) return null;
+      return prisma.user.findUnique({
+        where: { user_id: parent.processing_agent },
       });
     },
     orderProducts: (parent: any) => {

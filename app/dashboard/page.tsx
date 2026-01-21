@@ -13,7 +13,9 @@ import {
   ArrowUpRight,
   MoreVertical,
   ChevronRight,
-  List
+  List,
+  ClipboardList,
+  UserCheck
 } from 'lucide-react';
 import { UserButton, useUser } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
@@ -93,6 +95,18 @@ export default function DashboardPage() {
               className="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium transition-colors rounded-lg hover:bg-gray-100"
             >
               Orders
+            </Link>
+            <Link
+              href="/processing/available"
+              className="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium transition-colors rounded-lg hover:bg-gray-100"
+            >
+              Processing Agent Orders
+            </Link>
+            <Link
+              href="/processing/my-orders"
+              className="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium transition-colors rounded-lg hover:bg-gray-100"
+            >
+              My Processing Orders
             </Link>
             <UserButton 
               afterSignOutUrl="/"
