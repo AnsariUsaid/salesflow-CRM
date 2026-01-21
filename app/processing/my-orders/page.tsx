@@ -151,10 +151,10 @@ export default function MyProcessingOrdersPage() {
                       </td>
                       <td className="px-6 py-4">
                         <Link
-                          href={`/orders-list/${order.order_id}`}
+                          href={`/processing/my-orders/${order.order_id}`}
                           className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
                         >
-                          View Details
+                          Manage Procurement
                           <ChevronRight size={16} />
                         </Link>
                       </td>

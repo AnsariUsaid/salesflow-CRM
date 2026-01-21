@@ -285,6 +285,16 @@ export const typeDefs = `#graphql
       agent_id: String!
     ): Order!
 
+    updateOrderProductProcurement(
+      orderproduct_id: ID!
+      procurement_cost: Float!
+      procurement_source: String!
+    ): OrderProduct!
+
+    completeOrderProcurement(
+      order_id: ID!
+    ): Order!
+
     # Transaction mutations
     createTransaction(
       order_id: ID!

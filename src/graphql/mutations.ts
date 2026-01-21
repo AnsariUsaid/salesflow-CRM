@@ -70,6 +70,25 @@ export const ASSIGN_ORDER_AGENT = gql`
   }
 `;
 
+export const UPDATE_ORDER_PRODUCT_PROCUREMENT = gql`
+  mutation UpdateOrderProductProcurement($orderproduct_id: ID!, $procurement_cost: Float!, $procurement_source: String!) {
+    updateOrderProductProcurement(orderproduct_id: $orderproduct_id, procurement_cost: $procurement_cost, procurement_source: $procurement_source) {
+      orderproduct_id
+      procurement_cost
+      procurement_source
+    }
+  }
+`;
+
+export const COMPLETE_ORDER_PROCUREMENT = gql`
+  mutation CompleteOrderProcurement($order_id: ID!) {
+    completeOrderProcurement(order_id: $order_id) {
+      order_id
+      fulfillment_status
+    }
+  }
+`;
+
 // Product Mutations
 export const CREATE_PRODUCT = gql`
   mutation CreateProduct(

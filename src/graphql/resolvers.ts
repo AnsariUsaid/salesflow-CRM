@@ -461,6 +461,59 @@ export const resolvers = {
       });
     },
 
+    updateOrderProductProcurement: async (_: any, { orderproduct_id, procurement_cost, procurement_source }: any, context: any) => {
+      if (!context.user) throw new GraphQLError('Not authenticated');
+
+      // Get the order product and verify access
+      const orderProduct = await prisma.orderProduct.findUnique({
+        where: { orderproduct_id },
+        include: { order: true },
+      });
+
+      if (!orderProduct || orderProduct.order.org_id !== context.user.org_id) {
+        throw new GraphQLError('Order product not found');
+      }
+
+      // Update procurement details
+      return prisma.orderProduct.update({
+        where: { orderproduct_id },
+        data: {
+          procurement_cost,
+          procurement_source,
+        },
+      });
+    },
+
+    completeOrderProcurement: async (_: any, { order_id }: any, context: any) => {
+      if (!context.user) throw new GraphQLError('Not authenticated');
+
+      const order = await prisma.order.findUnique({
+        where: { order_id },
+        include: { orderProducts: true },
+      });
+
+      if (!order || order.org_id !== context.user.org_id) {
+        throw new GraphQLError('Order not found');
+      }
+
+      // Check if all products have procurement info
+      const allProductsHaveProcurement = order.orderProducts.every(
+        (product) => product.procurement_cost && product.procurement_source
+      );
+
+      if (!allProductsHaveProcurement) {
+        throw new GraphQLError('All products must have procurement details before completing');
+      }
+
+      // Update order status to shipped
+      return prisma.order.update({
+        where: { order_id },
+        data: {
+          fulfillment_status: 'shipped',
+        },
+      });
+    },
+
     // Transaction mutations
     createTransaction: async (_: any, args: any, context: any) => {
       if (!context.user) throw new GraphQLError('Not authenticated');
