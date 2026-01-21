@@ -220,6 +220,42 @@ export const resolvers = {
         orderBy: { createdAt: 'desc' },
       });
     },
+
+    availableOrdersForFollowup: async (_: any, __: any, context: any) => {
+      if (!context.user) throw new GraphQLError('Not authenticated');
+
+      return prisma.order.findMany({
+        where: {
+          org_id: context.user.org_id,
+          fulfillment_status: {
+            in: ['delivered', 'shipped'], // Orders that need follow-up
+          },
+        },
+        include: {
+          customer: {
+            select: {
+              user_id: true,
+              firstname: true,
+              lastname: true,
+              email: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+    },
+
+    myFollowupOrders: async (_: any, __: any, context: any) => {
+      if (!context.user) throw new GraphQLError('Not authenticated');
+
+      return prisma.order.findMany({
+        where: {
+          org_id: context.user.org_id,
+          followup_agent: context.user.user_id, // Assigned to me
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+    },
   },
 
   Mutation: {
@@ -438,8 +474,10 @@ export const resolvers = {
         throw new GraphQLError('Order not found');
       }
 
-      // Allow processing agents to self-assign, otherwise require admin
-      const isSelfAssign = agent_type === 'processing' && agent_id === context.user.user_id;
+      // Allow processing and followup agents to self-assign, otherwise require admin
+      const isSelfAssign = 
+        (agent_type === 'processing' && agent_id === context.user.user_id) ||
+        (agent_type === 'followup' && agent_id === context.user.user_id);
       if (!isSelfAssign && context.user.role !== 'admin') {
         throw new GraphQLError('Not authorized');
       }

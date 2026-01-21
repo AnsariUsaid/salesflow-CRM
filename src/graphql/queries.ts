@@ -210,3 +210,83 @@ export const GET_MY_PROCESSING_ORDERS = gql`
     }
   }
 `;
+
+export const GET_AVAILABLE_ORDERS_FOR_FOLLOWUP = gql`
+  query GetAvailableOrdersForFollowup {
+    availableOrdersForFollowup {
+      order_id
+      customer_name
+      customer_email
+      customer_phone
+      payment_status
+      fulfillment_status
+      total_amount
+      createdAt
+      followup_agent
+      customer {
+        user_id
+        firstname
+        lastname
+        email
+      }
+    }
+  }
+`;
+
+export const GET_MY_FOLLOWUP_ORDERS = gql`
+  query GetMyFollowupOrders {
+    myFollowupOrders {
+      order_id
+      customer_name
+      customer_email
+      customer_phone
+      payment_status
+      fulfillment_status
+      total_amount
+      createdAt
+      shipping_address
+      orderProducts {
+        orderproduct_id
+        product_name
+        product_code
+        make
+        model
+        year
+        quantity
+        price
+      }
+    }
+  }
+`;
+
+export const GET_TICKET = gql`
+  query GetTicket($ticketId: ID!) {
+    ticket(ticket_id: $ticketId) {
+      ticket_id
+      org_id
+      order_id
+      user_id
+      title
+      description
+      priority
+      status
+      assigned_to
+      createdAt
+      updatedAt
+      resolvedAt
+      user {
+        user_id
+        firstname
+        lastname
+        email
+      }
+      order {
+        order_id
+        customer_name
+        customer_email
+        total_amount
+        fulfillment_status
+      }
+    }
+  }
+`;

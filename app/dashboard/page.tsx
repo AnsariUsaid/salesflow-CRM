@@ -102,24 +102,48 @@ export default function DashboardPage() {
               <span className="text-xs block text-gray-500 -mt-0.5">CRM System</span>
             </div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 flex-wrap">
             <Link
               href="/orders"
-              className="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium transition-colors rounded-lg hover:bg-gray-100"
+              className="px-3 py-2 text-sm text-gray-700 hover:text-gray-900 font-medium transition-colors rounded-lg hover:bg-gray-100"
             >
               Orders
             </Link>
             <Link
               href="/processing/available"
-              className="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium transition-colors rounded-lg hover:bg-gray-100"
+              className="px-3 py-2 text-sm text-gray-700 hover:text-gray-900 font-medium transition-colors rounded-lg hover:bg-gray-100"
             >
-              Processing Agent Orders
+              Processing
             </Link>
             <Link
               href="/processing/my-orders"
-              className="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium transition-colors rounded-lg hover:bg-gray-100"
+              className="px-3 py-2 text-sm text-gray-700 hover:text-gray-900 font-medium transition-colors rounded-lg hover:bg-gray-100"
             >
-              My Processing Orders
+              My Processing
+            </Link>
+            <Link
+              href="/followup/available"
+              className="px-3 py-2 text-sm text-gray-700 hover:text-gray-900 font-medium transition-colors rounded-lg hover:bg-gray-100"
+            >
+              Follow-up
+            </Link>
+            <Link
+              href="/followup/my-orders"
+              className="px-3 py-2 text-sm text-gray-700 hover:text-gray-900 font-medium transition-colors rounded-lg hover:bg-gray-100"
+            >
+              My Follow-up
+            </Link>
+            <Link
+              href="/tickets"
+              className="px-3 py-2 text-sm text-gray-700 hover:text-gray-900 font-medium transition-colors rounded-lg hover:bg-gray-100"
+            >
+              Tickets
+            </Link>
+            <Link
+              href="/tickets/my-tickets"
+              className="px-3 py-2 text-sm text-gray-700 hover:text-gray-900 font-medium transition-colors rounded-lg hover:bg-gray-100"
+            >
+              My Tickets
             </Link>
             <UserButton 
               afterSignOutUrl="/"
@@ -246,6 +270,26 @@ export default function DashboardPage() {
                      <span className="flex items-center gap-2">
                        <CreditCard size={18} />
                        Process Payment
+                     </span>
+                     <ArrowUpRight size={16} />
+                   </Link>
+                   <Link 
+                      href="/followup/available"
+                      className="w-full bg-white/10 hover:bg-white/20 border border-white/20 p-3.5 rounded-lg flex items-center justify-between transition-all hover:scale-105 text-sm font-semibold backdrop-blur-sm"
+                   >
+                     <span className="flex items-center gap-2">
+                       <UserCheck size={18} />
+                       Follow-up Orders
+                     </span>
+                     <ArrowUpRight size={16} />
+                   </Link>
+                   <Link 
+                      href="/tickets"
+                      className="w-full bg-white/10 hover:bg-white/20 border border-white/20 p-3.5 rounded-lg flex items-center justify-between transition-all hover:scale-105 text-sm font-semibold backdrop-blur-sm"
+                   >
+                     <span className="flex items-center gap-2">
+                       <ClipboardList size={18} />
+                       Support Tickets
                      </span>
                      <ArrowUpRight size={16} />
                    </Link>

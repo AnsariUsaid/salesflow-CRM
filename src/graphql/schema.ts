@@ -196,6 +196,8 @@ export const typeDefs = `#graphql
     myOrders: [Order!]!
     availableOrdersForProcessing: [Order!]!
     myProcessingOrders: [Order!]!
+    availableOrdersForFollowup: [Order!]!
+    myFollowupOrders: [Order!]!
 
     # Transaction queries
     transactions: [Transaction!]!
