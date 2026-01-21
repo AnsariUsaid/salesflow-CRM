@@ -175,6 +175,18 @@ function OrderDetailContent({ orderId }: { orderId: string }) {
               </div>
             </div>
             <div className="flex gap-2">
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm"
+              >
+                Dashboard
+              </button>
+              <button
+                onClick={() => router.push('/orders-list')}
+                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm"
+              >
+                Orders List
+              </button>
               <div className={`px-4 py-2 rounded-lg border-2 font-semibold ${getPaymentStatusColor(order.payment_status)}`}>
                 {order.payment_status.charAt(0).toUpperCase() + order.payment_status.slice(1)}
               </div>

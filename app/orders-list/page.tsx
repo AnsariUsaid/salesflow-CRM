@@ -162,7 +162,10 @@ function OrdersListContent() {
                       Customer
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
+                      Payment Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Fulfillment Status
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Total
@@ -190,14 +193,14 @@ function OrdersListContent() {
                         <div className="text-sm text-gray-500">{order.customer_email}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex gap-2">
-                          <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getPaymentStatusColor(order.payment_status)}`}>
-                            {order.payment_status.charAt(0).toUpperCase() + order.payment_status.slice(1)}
-                          </span>
-                          <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getFulfillmentStatusColor(order.fulfillment_status)}`}>
-                            {order.fulfillment_status.charAt(0).toUpperCase() + order.fulfillment_status.slice(1)}
-                          </span>
-                        </div>
+                        <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getPaymentStatusColor(order.payment_status)}`}>
+                          {order.payment_status.charAt(0).toUpperCase() + order.payment_status.slice(1)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getFulfillmentStatusColor(order.fulfillment_status)}`}>
+                          {order.fulfillment_status.charAt(0).toUpperCase() + order.fulfillment_status.slice(1)}
+                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
                         ${order.total_amount.toFixed(2)}
@@ -206,13 +209,15 @@ function OrdersListContent() {
                         {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <button
-                          onClick={(e) => handleProcessPayment(e, order.order_id)}
-                          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm hover:shadow-md"
-                        >
-                          <CreditCard size={16} />
-                          Process Payment
-                        </button>
+                        {order.payment_status === 'unpaid' && (
+                          <button
+                            onClick={(e) => handleProcessPayment(e, order.order_id)}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm hover:shadow-md"
+                          >
+                            <CreditCard size={16} />
+                            Process Payment
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}

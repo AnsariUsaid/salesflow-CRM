@@ -35,24 +35,33 @@ export async function GET() {
 
     const activeOrders = await prisma.order.count({
       where: {
-        fulfillment_status: 'processing',
+        fulfillment_status: { not: 'closed' },
         org_id: user.org_id,
       },
     });
 
-    const newCustomers = await prisma.user.count({
+    // Count unique customers who placed orders in the last 30 days
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const newCustomersOrders = await prisma.order.findMany({
       where: {
         org_id: user.org_id,
-        role: 'customer',
         createdAt: {
-          gte: new Date(new Date().setDate(new Date().getDate() - 30)),
+          gte: thirtyDaysAgo,
         },
       },
+      select: {
+        user_id: true,
+      },
+      distinct: ['user_id'],
     });
+    
+    const newCustomers = newCustomersOrders.length;
 
     const pendingProcess = await prisma.order.count({
         where: {
-            fulfillment_status: 'pending',
+            payment_status: 'unpaid',
             org_id: user.org_id,
         },
     });
