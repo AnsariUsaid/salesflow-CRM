@@ -8,6 +8,22 @@ export const typeDefs = `#graphql
     customer
   }
 
+  enum PaymentStatus {
+    unpaid
+    partial
+    paid
+    refunded
+  }
+
+  enum FulfillmentStatus {
+    pending
+    processing
+    shipped
+    delivered
+    closed
+    cancelled
+  }
+
   enum OrderStatus {
     created
     paid
@@ -115,7 +131,8 @@ export const typeDefs = `#graphql
     processing_agent: String
     followup_agent: String
     order_tracking: String
-    order_status: OrderStatus!
+    payment_status: PaymentStatus!
+    fulfillment_status: FulfillmentStatus!
     createdAt: String!
     updatedAt: String!
     customer: User
@@ -245,7 +262,18 @@ export const typeDefs = `#graphql
 
     updateOrderStatus(
       order_id: ID!
-      order_status: OrderStatus!
+      payment_status: PaymentStatus
+      fulfillment_status: FulfillmentStatus
+    ): Order!
+
+    updatePaymentStatus(
+      order_id: ID!
+      payment_status: PaymentStatus!
+    ): Order!
+
+    updateFulfillmentStatus(
+      order_id: ID!
+      fulfillment_status: FulfillmentStatus!
     ): Order!
 
     assignOrderAgent(

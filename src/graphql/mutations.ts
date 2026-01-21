@@ -20,7 +20,8 @@ export const CREATE_ORDER = gql`
     ) {
       order_id
       customer_name
-      order_status
+      payment_status
+      fulfillment_status
       total_amount
       createdAt
     }
@@ -28,10 +29,31 @@ export const CREATE_ORDER = gql`
 `;
 
 export const UPDATE_ORDER_STATUS = gql`
-  mutation UpdateOrderStatus($order_id: ID!, $order_status: OrderStatus!) {
-    updateOrderStatus(order_id: $order_id, order_status: $order_status) {
+  mutation UpdateOrderStatus($order_id: ID!, $payment_status: PaymentStatus, $fulfillment_status: FulfillmentStatus) {
+    updateOrderStatus(order_id: $order_id, payment_status: $payment_status, fulfillment_status: $fulfillment_status) {
       order_id
-      order_status
+      payment_status
+      fulfillment_status
+      updatedAt
+    }
+  }
+`;
+
+export const UPDATE_PAYMENT_STATUS = gql`
+  mutation UpdatePaymentStatus($order_id: ID!, $payment_status: PaymentStatus!) {
+    updatePaymentStatus(order_id: $order_id, payment_status: $payment_status) {
+      order_id
+      payment_status
+      updatedAt
+    }
+  }
+`;
+
+export const UPDATE_FULFILLMENT_STATUS = gql`
+  mutation UpdateFulfillmentStatus($order_id: ID!, $fulfillment_status: FulfillmentStatus!) {
+    updateFulfillmentStatus(order_id: $order_id, fulfillment_status: $fulfillment_status) {
+      order_id
+      fulfillment_status
       updatedAt
     }
   }

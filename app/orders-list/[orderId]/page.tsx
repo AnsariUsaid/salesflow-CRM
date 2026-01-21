@@ -18,7 +18,7 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { GET_ORDER } from '@/graphql/queries';
-import { UPDATE_ORDER_STATUS } from '@/graphql/mutations';
+import { UPDATE_PAYMENT_STATUS, UPDATE_FULFILLMENT_STATUS } from '@/graphql/mutations';
 
 export default function OrderDetailPage({ params }: { params: Promise<{ orderId: string }> }) {
   const { isLoaded, isSignedIn } = useUser();
@@ -52,27 +52,46 @@ function OrderDetailContent({ orderId }: { orderId: string }) {
     variables: { orderId },
   });
 
-  // Update order status mutation
-  const [updateOrderStatus, { loading: isUpdating }] = useMutation(UPDATE_ORDER_STATUS, {
+  // Update status mutations
+  const [updatePaymentStatus, { loading: isUpdatingPayment }] = useMutation(UPDATE_PAYMENT_STATUS, {
+    refetchQueries: [{ query: GET_ORDER, variables: { orderId } }],
+  });
+  
+  const [updateFulfillmentStatus, { loading: isUpdatingFulfillment }] = useMutation(UPDATE_FULFILLMENT_STATUS, {
     refetchQueries: [{ query: GET_ORDER, variables: { orderId } }],
   });
 
   const order = data?.order;
-  const selectedStatus = order?.order_status || '';
 
-  // Update order status
-  const handleStatusUpdate = async (newStatus: string) => {
+  // Update payment status
+  const handlePaymentStatusUpdate = async (newStatus: string) => {
     try {
-      await updateOrderStatus({
+      await updatePaymentStatus({
         variables: {
           order_id: orderId,
-          order_status: newStatus.toLowerCase(),
+          payment_status: newStatus.toLowerCase(),
         },
       });
-      alert('Order status updated successfully!');
+      alert('Payment status updated successfully!');
     } catch (error) {
-      console.error('Error updating order:', error);
-      alert('Error updating order status');
+      console.error('Error updating payment status:', error);
+      alert('Error updating payment status');
+    }
+  };
+
+  // Update fulfillment status
+  const handleFulfillmentStatusUpdate = async (newStatus: string) => {
+    try {
+      await updateFulfillmentStatus({
+        variables: {
+          order_id: orderId,
+          fulfillment_status: newStatus.toLowerCase(),
+        },
+      });
+      alert('Fulfillment status updated successfully!');
+    } catch (error) {
+      console.error('Error updating fulfillment status:', error);
+      alert('Error updating fulfillment status');
     }
   };
 
@@ -82,14 +101,26 @@ function OrderDetailContent({ orderId }: { orderId: string }) {
     router.push('/payment');
   };
 
-  // Get status color
-  const getStatusColor = (status: string) => {
+  // Get payment status color
+  const getPaymentStatusColor = (status: string) => {
     switch (status) {
-      case 'created': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'unpaid': return 'bg-red-100 text-red-800 border-red-200';
+      case 'partial': return 'bg-orange-100 text-orange-800 border-orange-200';
       case 'paid': return 'bg-green-100 text-green-800 border-green-200';
+      case 'refunded': return 'bg-gray-100 text-gray-800 border-gray-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  // Get fulfillment status color
+  const getFulfillmentStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'processing': return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'shipped': return 'bg-purple-100 text-purple-800 border-purple-200';
       case 'delivered': return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+      case 'closed': return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'cancelled': return 'bg-red-100 text-red-800 border-red-200';
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
@@ -143,8 +174,13 @@ function OrderDetailContent({ orderId }: { orderId: string }) {
                 <p className="text-sm text-gray-500 mt-1">Order ID: {order.order_id}</p>
               </div>
             </div>
-            <div className={`px-4 py-2 rounded-lg border-2 font-semibold ${getStatusColor(order.order_status)}`}>
-              {order.order_status === 'created' ? 'Unpaid' : (order.order_status ? order.order_status.charAt(0).toUpperCase() + order.order_status.slice(1) : 'Unknown')}
+            <div className="flex gap-2">
+              <div className={`px-4 py-2 rounded-lg border-2 font-semibold ${getPaymentStatusColor(order.payment_status)}`}>
+                {order.payment_status.charAt(0).toUpperCase() + order.payment_status.slice(1)}
+              </div>
+              <div className={`px-4 py-2 rounded-lg border-2 font-semibold ${getFulfillmentStatusColor(order.fulfillment_status)}`}>
+                {order.fulfillment_status.charAt(0).toUpperCase() + order.fulfillment_status.slice(1)}
+              </div>
             </div>
           </div>
         </div>
@@ -242,30 +278,52 @@ function OrderDetailContent({ orderId }: { orderId: string }) {
 
           {/* Right Column - Actions & Status */}
           <div className="space-y-6">
-            {/* Order Status Update */}
+            {/* Payment Status Update */}
             <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-lg font-semibold text-gray-800 mb-4">Update Status</h2>
+              <h2 className="text-lg font-semibold text-gray-800 mb-4">Payment Status</h2>
               <div className="space-y-3">
-                {['created', 'paid', 'processing', 'shipped', 'delivered'].map((status) => (
+                {['unpaid', 'partial', 'paid', 'refunded'].map((status) => (
                   <button
                     key={status}
-                    onClick={() => handleStatusUpdate(status)}
-                    disabled={isUpdating || selectedStatus === status}
+                    onClick={() => handlePaymentStatusUpdate(status)}
+                    disabled={isUpdatingPayment || order.payment_status === status}
                     className={`w-full px-4 py-3 rounded-lg border-2 font-medium transition-all ${
-                      selectedStatus === status
-                        ? getStatusColor(status) + ' cursor-default'
+                      order.payment_status === status
+                        ? getPaymentStatusColor(status) + ' cursor-default'
                         : 'bg-white border-gray-200 hover:border-blue-400 text-gray-700 hover:bg-blue-50'
-                    } ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''} flex items-center justify-between`}
+                    } ${isUpdatingPayment ? 'opacity-50 cursor-not-allowed' : ''} flex items-center justify-between`}
                   >
-                    <span>{status === 'created' ? 'Unpaid' : status.charAt(0).toUpperCase() + status.slice(1)}</span>
-                    {selectedStatus === status && <CheckCircle2 size={18} />}
+                    <span>{status.charAt(0).toUpperCase() + status.slice(1)}</span>
+                    {order.payment_status === status && <CheckCircle2 size={18} />}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Fulfillment Status Update */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-lg font-semibold text-gray-800 mb-4">Fulfillment Status</h2>
+              <div className="space-y-3">
+                {['pending', 'processing', 'shipped', 'delivered', 'closed'].map((status) => (
+                  <button
+                    key={status}
+                    onClick={() => handleFulfillmentStatusUpdate(status)}
+                    disabled={isUpdatingFulfillment || order.fulfillment_status === status}
+                    className={`w-full px-4 py-3 rounded-lg border-2 font-medium transition-all ${
+                      order.fulfillment_status === status
+                        ? getFulfillmentStatusColor(status) + ' cursor-default'
+                        : 'bg-white border-gray-200 hover:border-blue-400 text-gray-700 hover:bg-blue-50'
+                    } ${isUpdatingFulfillment ? 'opacity-50 cursor-not-allowed' : ''} flex items-center justify-between`}
+                  >
+                    <span>{status.charAt(0).toUpperCase() + status.slice(1)}</span>
+                    {order.fulfillment_status === status && <CheckCircle2 size={18} />}
                   </button>
                 ))}
               </div>
             </div>
 
             {/* Payment Action */}
-            {order.order_status === 'created' && (
+            {order.payment_status === 'unpaid' && (
               <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg shadow-sm p-6 border border-blue-100">
                 <h2 className="text-lg font-semibold text-gray-800 mb-2">Payment Required</h2>
                 <p className="text-sm text-gray-600 mb-4">This order hasn't been paid yet.</p>

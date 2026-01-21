@@ -50,13 +50,26 @@ function OrdersListContent() {
     );
   });
 
-  // Get status badge color
-  const getStatusColor = (status: string) => {
+  // Get status badge color for fulfillment status
+  const getFulfillmentStatusColor = (status: string) => {
     switch (status) {
-      case 'created': return 'bg-yellow-100 text-yellow-800';
-      case 'paid': return 'bg-green-100 text-green-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
       case 'processing': return 'bg-blue-100 text-blue-800';
       case 'shipped': return 'bg-purple-100 text-purple-800';
+      case 'delivered': return 'bg-green-100 text-green-800';
+      case 'closed': return 'bg-gray-100 text-gray-800';
+      case 'cancelled': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  // Get payment status badge color
+  const getPaymentStatusColor = (status: string) => {
+    switch (status) {
+      case 'unpaid': return 'bg-red-100 text-red-800';
+      case 'partial': return 'bg-orange-100 text-orange-800';
+      case 'paid': return 'bg-green-100 text-green-800';
+      case 'refunded': return 'bg-gray-100 text-gray-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -177,9 +190,14 @@ function OrdersListContent() {
                         <div className="text-sm text-gray-500">{order.customer_email}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(order.order_status)}`}>
-                          {order.order_status === 'created' ? 'Unpaid' : order.order_status.charAt(0).toUpperCase() + order.order_status.slice(1)}
-                        </span>
+                        <div className="flex gap-2">
+                          <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getPaymentStatusColor(order.payment_status)}`}>
+                            {order.payment_status.charAt(0).toUpperCase() + order.payment_status.slice(1)}
+                          </span>
+                          <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getFulfillmentStatusColor(order.fulfillment_status)}`}>
+                            {order.fulfillment_status.charAt(0).toUpperCase() + order.fulfillment_status.slice(1)}
+                          </span>
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
                         ${order.total_amount.toFixed(2)}

@@ -18,7 +18,7 @@ import {
   FileText,
   ShieldCheck
 } from 'lucide-react';
-import { CREATE_TRANSACTION, UPDATE_ORDER_STATUS } from '@/graphql/mutations';
+import { CREATE_TRANSACTION, UPDATE_PAYMENT_STATUS } from '@/graphql/mutations';
 
 interface PaymentFormData {
   order_id: string;
@@ -70,7 +70,7 @@ function PaymentPageContent() {
 
   // GraphQL Mutations
   const [createTransaction, { loading: isProcessing }] = useMutation(CREATE_TRANSACTION);
-  const [updateOrderStatus] = useMutation(UPDATE_ORDER_STATUS);
+  const [updatePaymentStatus] = useMutation(UPDATE_PAYMENT_STATUS);
 
   // Form State
   const [formData, setFormData] = useState<PaymentFormData>({
@@ -178,11 +178,11 @@ function PaymentPageContent() {
       });
 
       if (data?.createTransaction) {
-        // Update order status to 'paid'
-        await updateOrderStatus({
+        // Update payment status to 'paid'
+        await updatePaymentStatus({
           variables: {
             order_id: orderData.order_id,
-            order_status: 'paid',
+            payment_status: 'paid',
           },
         });
 
@@ -284,8 +284,15 @@ function PaymentPageContent() {
           
           <div className="space-y-3">
             <button 
+              onClick={() => router.push(`/orders-list/${transactionDetails.orderId}`)} 
+              className="w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+            >
+              <FileText size={18} />
+              View Order Details
+            </button>
+            <button 
               onClick={() => router.push('/orders-list')} 
-              className="w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+              className="w-full py-3 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
             >
               View All Orders
             </button>
@@ -296,7 +303,7 @@ function PaymentPageContent() {
               Create New Order
             </button>
             <button 
-              onClick={() => router.push('/')} 
+              onClick={() => router.push('/dashboard')} 
               className="w-full py-3 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
             >
               Back to Dashboard

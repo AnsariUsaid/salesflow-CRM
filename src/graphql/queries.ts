@@ -8,7 +8,8 @@ export const GET_ORDERS = gql`
       customer_name
       customer_email
       customer_phone
-      order_status
+      payment_status
+      fulfillment_status
       total_amount
       createdAt
     }
@@ -24,7 +25,8 @@ export const GET_ORDER = gql`
       customer_phone
       shipping_address
       total_amount
-      order_status
+      payment_status
+      fulfillment_status
       createdAt
       orderProducts {
         orderproduct_id

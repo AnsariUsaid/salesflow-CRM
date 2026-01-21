@@ -526,28 +526,26 @@ function OrdersPageContent({ user }: { user: any }) {
                 <div
                   key={order.order_id}
                   onClick={() => {
-                    if (order.order_status === "created") {
+                    if (order.payment_status === "unpaid") {
                       handlePayForOrder(order);
                     }
                   }}
                   className={`flex items-center px-4 py-3 hover:bg-slate-800 transition-colors ${!isSidebarOpen && "justify-center"} ${
-                    order.order_status === "created"
+                    order.payment_status === "unpaid"
                       ? "cursor-pointer"
                       : "cursor-default"
                   }`}
-                  title={order.order_status === "created" ? "Click to pay" : ""}
+                  title={order.payment_status === "unpaid" ? "Click to pay" : ""}
                 >
                   <div
                     className={`w-2 h-2 rounded-full mr-3 ${
-                      order.order_status === "created"
+                      order.payment_status === "unpaid"
                         ? "bg-yellow-400"
-                        : order.order_status === "paid"
+                        : order.payment_status === "paid"
                           ? "bg-green-400"
-                          : order.order_status === "processing"
-                            ? "bg-blue-400"
-                            : order.order_status === "shipped"
-                              ? "bg-purple-400"
-                              : "bg-gray-400"
+                          : order.payment_status === "partial"
+                            ? "bg-orange-400"
+                            : "bg-gray-400"
                     }`}
                   />
 
@@ -560,7 +558,7 @@ function OrdersPageContent({ user }: { user: any }) {
                         <span>{order.order_id.slice(0, 12)}</span>
                         <span className="flex items-center gap-1">
                           ${order.total_amount}
-                          {order.order_status === "created" && (
+                          {order.payment_status === "unpaid" && (
                             <span className="text-yellow-400 text-[10px]">
                               • Unpaid
                             </span>

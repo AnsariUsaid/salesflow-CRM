@@ -75,7 +75,7 @@ model Product {
 }
 
 model Order {
-  order_id          String         @id @default(cuid())
+  order_id          String            @id @default(cuid())
   org_id            String
   user_id           String
   customer_name     String
@@ -88,22 +88,24 @@ model Order {
   processing_agent  String?
   followup_agent    String?
   order_tracking    String?
-  order_status      OrderStatus    @default(created)
+  payment_status    PaymentStatus     @default(unpaid)
+  fulfillment_status FulfillmentStatus @default(pending)
   meta_data         Json?
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
   orderProducts     OrderProduct[]
-  followupUser      User?          @relation("FollowupAgentOrders", fields: [followup_agent], references: [user_id])
-  organization      Organization   @relation(fields: [org_id], references: [org_id])
-  processingUser    User?          @relation("ProcessingAgentOrders", fields: [processing_agent], references: [user_id])
-  salesUser         User?          @relation("SalesAgentOrders", fields: [sales_agent], references: [user_id])
-  customer          User           @relation("CustomerOrders", fields: [user_id], references: [user_id])
+  followupUser      User?             @relation("FollowupAgentOrders", fields: [followup_agent], references: [user_id])
+  organization      Organization      @relation(fields: [org_id], references: [org_id])
+  processingUser    User?             @relation("ProcessingAgentOrders", fields: [processing_agent], references: [user_id])
+  salesUser         User?             @relation("SalesAgentOrders", fields: [sales_agent], references: [user_id])
+  customer          User              @relation("CustomerOrders", fields: [user_id], references: [user_id])
   tickets           Ticket[]
   transactions      Transaction[]
 
   @@index([org_id])
   @@index([user_id])
-  @@index([order_status])
+  @@index([payment_status])
+  @@index([fulfillment_status])
   @@index([createdAt])
   @@map("orders")
 }
@@ -208,6 +210,22 @@ enum UserRole {
   processing
   followup
   customer
+}
+
+enum PaymentStatus {
+  unpaid
+  partial
+  paid
+  refunded
+}
+
+enum FulfillmentStatus {
+  pending
+  processing
+  shipped
+  delivered
+  closed
+  cancelled
 }
 
 enum OrderStatus {
