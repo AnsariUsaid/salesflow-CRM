@@ -162,6 +162,7 @@ export const typeDefs = `#graphql
     me: User
     users: [User!]!
     user(user_id: ID!): User
+    userByEmail(email: String!): User
 
     # Organization queries
     myOrganization: Organization

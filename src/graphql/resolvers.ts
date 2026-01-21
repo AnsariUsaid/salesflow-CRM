@@ -39,6 +39,20 @@ export const resolvers = {
       return user;
     },
 
+    userByEmail: async (_: any, { email }: any, context: any) => {
+      if (!context.user) throw new GraphQLError('Not authenticated');
+
+      const user = await prisma.user.findFirst({
+        where: { 
+          email,
+          org_id: context.user.org_id,
+          isdeleted: false,
+        },
+      });
+
+      return user;
+    },
+
     // Organization queries
     myOrganization: async (_: any, __: any, context: any) => {
       if (!context.user) throw new GraphQLError('Not authenticated');

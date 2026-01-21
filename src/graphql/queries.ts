@@ -102,6 +102,21 @@ export const GET_USERS = gql`
   }
 `;
 
+export const GET_USER_BY_EMAIL = gql`
+  query GetUserByEmail($email: String!) {
+    userByEmail(email: $email) {
+      user_id
+      firstname
+      lastname
+      email
+      phone
+      address
+      city
+      state
+    }
+  }
+`;
+
 // Transaction Queries
 export const GET_TRANSACTIONS = gql`
   query GetTransactions {
