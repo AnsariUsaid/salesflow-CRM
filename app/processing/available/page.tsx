@@ -155,7 +155,8 @@ export default function AvailableOrdersPage() {
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Model</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Year</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Amount</th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Status</th>
+                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Payment</th>
+                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Fulfillment</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Created</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Action</th>
                 </tr>
@@ -212,6 +213,11 @@ export default function AvailableOrdersPage() {
                           </span>
                         </td>
                         <td className="px-6 py-4">
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(order.payment_status)}`}>
+                            {order.payment_status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
                           <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(order.fulfillment_status)}`}>
                             {order.fulfillment_status}
                           </span>
@@ -230,7 +236,7 @@ export default function AvailableOrdersPage() {
                                 }
                               </span>
                             </div>
-                          ) : order.payment_status === 'paid' ? (
+                          ) : (
                             <button
                               onClick={() => handleAssignToMe(order.order_id)}
                               disabled={assigningOrderId === order.order_id}
@@ -248,10 +254,6 @@ export default function AvailableOrdersPage() {
                                 </>
                               )}
                             </button>
-                          ) : (
-                            <div className="text-xs text-gray-500 italic">
-                              Payment required
-                            </div>
                           )}
                         </td>
                       </tr>

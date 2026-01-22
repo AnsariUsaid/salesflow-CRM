@@ -305,7 +305,10 @@ export default function DashboardPage() {
 
             {/* Pending Payments */}
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-               <div className="flex justify-between items-center mb-4">
+               <div 
+                 className="flex justify-between items-center mb-4 cursor-pointer hover:bg-gray-50 -m-2 p-2 rounded-lg transition-colors"
+                 onClick={() => router.push('/orders-list?filter=unpaid')}
+               >
                  <h3 className="font-bold text-gray-800">Pending Payments</h3>
                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-red-100 text-red-600">
                    {pendingPaymentsCount} Total
@@ -313,7 +316,11 @@ export default function DashboardPage() {
                </div>
                <ul className="space-y-3">
                   {Array.isArray(pendingReviews) && pendingReviews.map(order => (
-                    <li key={order.order_id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors">
+                    <li 
+                      key={order.order_id} 
+                      onClick={() => router.push('/orders-list?filter=unpaid')}
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
+                    >
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-xs font-bold text-red-600">
                           {order.customer.firstname.charAt(0)}{order.customer.lastname.charAt(0)}
