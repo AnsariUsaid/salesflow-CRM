@@ -51,7 +51,8 @@ export async function POST(req: Request) {
 
   // Handle the webhook
   const eventType = evt.type;
-  const { id, email_addresses, first_name, last_name, phone_numbers, public_metadata, organization_memberships } = evt.data;
+  const eventData = evt.data as any;
+  const { id, email_addresses, first_name, last_name, phone_numbers, public_metadata, organization_memberships } = eventData;
 
   // Helper function to map Clerk roles to database roles
   function mapClerkRoleToDbRole(clerkRole?: string): string {
