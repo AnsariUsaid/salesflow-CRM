@@ -18,7 +18,7 @@ const server = new ApolloServer({
 });
 
 // Context function - adds authenticated user to context
-async function context(req: NextRequest) {
+async function context(req: any) {
   try {
     const authResult = await auth();
     const { userId } = authResult;
@@ -41,7 +41,7 @@ async function context(req: NextRequest) {
 
 // Create Next.js handler with error handling
 const handler = startServerAndCreateNextHandler(server, {
-  context: async (req) => context(req),
+  context: async (req: any) => context(req),
 });
 
 export async function GET(request: NextRequest) {
