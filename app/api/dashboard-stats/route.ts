@@ -21,6 +21,57 @@ export async function GET() {
       return new NextResponse('User not found', { status: 404 });
     }
 
+    // Calculate today and yesterday date ranges
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterdayStart = new Date(todayStart);
+    yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+    const yesterdayEnd = new Date(todayStart);
+
+    // Today's revenue
+    const todayRevenue = await prisma.transaction.aggregate({
+      _sum: {
+        amount: true,
+      },
+      where: {
+        status: 'completed',
+        createdAt: {
+          gte: todayStart,
+        },
+        order: {
+          org_id: user.org_id,
+        },
+      },
+    });
+
+    // Yesterday's revenue
+    const yesterdayRevenue = await prisma.transaction.aggregate({
+      _sum: {
+        amount: true,
+      },
+      where: {
+        status: 'completed',
+        createdAt: {
+          gte: yesterdayStart,
+          lt: yesterdayEnd,
+        },
+        order: {
+          org_id: user.org_id,
+        },
+      },
+    });
+
+    // Calculate percentage change
+    const todayAmount = todayRevenue._sum.amount || 0;
+    const yesterdayAmount = yesterdayRevenue._sum.amount || 0;
+    let revenueChange = 0;
+    if (yesterdayAmount > 0) {
+      revenueChange = ((todayAmount - yesterdayAmount) / yesterdayAmount) * 100;
+    } else if (todayAmount > 0) {
+      revenueChange = 100; // If no revenue yesterday but have today, show 100% increase
+    }
+
+    // Total revenue (all time)
     const totalRevenue = await prisma.transaction.aggregate({
       _sum: {
         amount: true,
@@ -68,6 +119,7 @@ export async function GET() {
 
     return NextResponse.json({
       totalRevenue: totalRevenue._sum.amount || 0,
+      revenueChange: parseFloat(revenueChange.toFixed(1)),
       activeOrders,
       newCustomers,
       pendingProcess

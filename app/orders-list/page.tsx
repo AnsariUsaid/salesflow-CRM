@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { useQuery } from '@apollo/client/react';
-import { Search, Package, ArrowLeft, CreditCard, Home, PlusCircle } from 'lucide-react';
+import { Search, Package, ArrowLeft, CreditCard, Home, PlusCircle, Filter, X } from 'lucide-react';
 import { GET_ORDERS } from '@/graphql/queries';
 
 export default function OrdersListPage() {
@@ -35,19 +35,35 @@ export default function OrdersListPage() {
 function OrdersListContent() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
+  const [filterPaymentUnpaid, setFilterPaymentUnpaid] = useState(false);
+  const [filterFulfillmentPending, setFilterFulfillmentPending] = useState(false);
 
   // Fetch orders using GraphQL
   const { data, loading, error } = useQuery(GET_ORDERS);
   const orders = data?.orders || [];
 
-  // Filter orders based on search
+  // Filter orders based on search and filters
   const filteredOrders = orders.filter((order: any) => {
+    // Search filter
     const searchLower = searchQuery.toLowerCase();
-    return (
+    const matchesSearch = 
       order.customer_name.toLowerCase().includes(searchLower) ||
       order.order_id.toLowerCase().includes(searchLower) ||
-      order.customer_email?.toLowerCase().includes(searchLower)
-    );
+      order.customer_email?.toLowerCase().includes(searchLower);
+
+    if (!matchesSearch) return false;
+
+    // Payment status filter
+    if (filterPaymentUnpaid && order.payment_status !== 'unpaid') {
+      return false;
+    }
+
+    // Fulfillment status filter
+    if (filterFulfillmentPending && order.fulfillment_status !== 'pending') {
+      return false;
+    }
+
+    return true;
   });
 
   // Get status badge color for fulfillment status
@@ -117,8 +133,8 @@ function OrdersListContent() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-8">
-        {/* Search Bar */}
-        <div className="mb-6">
+        {/* Search Bar and Filters */}
+        <div className="mb-6 space-y-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
             <input
@@ -128,6 +144,47 @@ function OrdersListContent() {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
+          </div>
+
+          {/* Filter Buttons */}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <Filter size={16} />
+              <span className="font-medium">Filters:</span>
+            </div>
+            <button
+              onClick={() => setFilterPaymentUnpaid(!filterPaymentUnpaid)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
+                filterPaymentUnpaid
+                  ? 'bg-red-600 text-white hover:bg-red-700'
+                  : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              {filterPaymentUnpaid && <X size={14} />}
+              Unpaid Orders
+            </button>
+            <button
+              onClick={() => setFilterFulfillmentPending(!filterFulfillmentPending)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
+                filterFulfillmentPending
+                  ? 'bg-yellow-600 text-white hover:bg-yellow-700'
+                  : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              {filterFulfillmentPending && <X size={14} />}
+              Pending Fulfillment
+            </button>
+            {(filterPaymentUnpaid || filterFulfillmentPending) && (
+              <button
+                onClick={() => {
+                  setFilterPaymentUnpaid(false);
+                  setFilterFulfillmentPending(false);
+                }}
+                className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 font-medium"
+              >
+                Clear All
+              </button>
+            )}
           </div>
         </div>
 

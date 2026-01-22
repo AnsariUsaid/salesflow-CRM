@@ -155,8 +155,16 @@ function OrdersPageContent({ user }: { user: any }) {
       price,
     } = newProductForm;
 
+    console.log('Creating product with:', newProductForm);
+
     if (!product_name || !product_code || !make || !model || !year) {
-      alert("Please fill in all required fields");
+      const missing = [];
+      if (!product_name) missing.push('Product Name');
+      if (!product_code) missing.push('Product Code');
+      if (!make) missing.push('Make');
+      if (!model) missing.push('Model');
+      if (!year) missing.push('Year');
+      alert(`Please fill in all required fields: ${missing.join(', ')}`);
       return;
     }
 
@@ -198,9 +206,9 @@ function OrdersPageContent({ user }: { user: any }) {
 
         alert("Product created and added to order!");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating product:", error);
-      alert("Failed to create product. Please try again.");
+      alert(`Failed to create product: ${error.message || 'Please try again'}`);
     }
   };
 

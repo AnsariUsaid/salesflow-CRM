@@ -1,14 +1,16 @@
 'use client';
 
 import { useQuery, useMutation } from '@apollo/client/react';
-import { Package, Clock, DollarSign, User, Loader2 } from 'lucide-react';
+import { Package, Clock, DollarSign, User, Loader2, Home, ClipboardList, ArrowLeft } from 'lucide-react';
 import { GET_AVAILABLE_ORDERS_FOR_PROCESSING, GET_ME } from '@/graphql/queries';
 import { ASSIGN_ORDER_AGENT } from '@/graphql/mutations';
 import { useUser } from '@clerk/nextjs';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function AvailableOrdersPage() {
   const { user: clerkUser } = useUser();
+  const router = useRouter();
   const [assigningOrderId, setAssigningOrderId] = useState<string | null>(null);
 
   const { data: userData } = useQuery(GET_ME);
@@ -70,10 +72,37 @@ export default function AvailableOrdersPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
       <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Header */}
+        {/* Header with Navigation */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Processing Agent - Available Orders</h1>
-          <p className="text-gray-600">All active orders ready for processing agent assignment</p>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Processing Agent - Available Orders</h1>
+              <p className="text-gray-600">All active orders ready for processing agent assignment</p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm flex items-center gap-2"
+              >
+                <Home size={16} />
+                Dashboard
+              </button>
+              <button
+                onClick={() => router.push('/orders-list')}
+                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm flex items-center gap-2"
+              >
+                <ClipboardList size={16} />
+                Orders List
+              </button>
+              <button
+                onClick={() => router.push('/processing/my-orders')}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm flex items-center gap-2"
+              >
+                <Package size={16} />
+                My Orders
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Stats */}
@@ -121,8 +150,11 @@ export default function AvailableOrdersPage() {
                 <tr>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Order ID</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Customer</th>
+                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Product Name</th>
+                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Make</th>
+                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Model</th>
+                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Year</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Amount</th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Payment</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Status</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Created</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Action</th>
@@ -131,7 +163,7 @@ export default function AvailableOrdersPage() {
               <tbody className="divide-y divide-gray-200">
                 {orders.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                    <td colSpan={10} className="px-6 py-12 text-center text-gray-500">
                       <Package className="mx-auto mb-4 text-gray-400" size={48} />
                       <p className="text-lg font-medium">No active orders</p>
                       <p className="text-sm">All orders have been closed or cancelled</p>
@@ -141,6 +173,8 @@ export default function AvailableOrdersPage() {
                   orders.map((order: any) => {
                     const isAssigned = !!order.processing_agent;
                     const isAssignedToMe = order.processing_agent === userData?.me?.user_id;
+                    const firstProduct = order.orderProducts?.[0];
+                    const productCount = order.orderProducts?.length || 0;
                     
                     return (
                       <tr key={order.order_id} className="hover:bg-gray-50 transition-colors">
@@ -156,13 +190,25 @@ export default function AvailableOrdersPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <span className="font-semibold text-gray-900">
-                            ${order.total_amount.toLocaleString()}
-                          </span>
+                          <div className="text-sm text-gray-900">
+                            {firstProduct?.product_name || 'N/A'}
+                            {productCount > 1 && (
+                              <span className="ml-1 text-xs text-gray-500">+{productCount - 1} more</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900">
+                          {firstProduct?.make || 'N/A'}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900">
+                          {firstProduct?.model || 'N/A'}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900">
+                          {firstProduct?.year || 'N/A'}
                         </td>
                         <td className="px-6 py-4">
-                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(order.payment_status)}`}>
-                            {order.payment_status}
+                          <span className="font-semibold text-gray-900">
+                            ${order.total_amount.toLocaleString()}
                           </span>
                         </td>
                         <td className="px-6 py-4">
@@ -184,7 +230,7 @@ export default function AvailableOrdersPage() {
                                 }
                               </span>
                             </div>
-                          ) : (
+                          ) : order.payment_status === 'paid' ? (
                             <button
                               onClick={() => handleAssignToMe(order.order_id)}
                               disabled={assigningOrderId === order.order_id}
@@ -202,6 +248,10 @@ export default function AvailableOrdersPage() {
                                 </>
                               )}
                             </button>
+                          ) : (
+                            <div className="text-xs text-gray-500 italic">
+                              Payment required
+                            </div>
                           )}
                         </td>
                       </tr>

@@ -182,6 +182,12 @@ export const GET_AVAILABLE_ORDERS_FOR_PROCESSING = gql`
         firstname
         lastname
       }
+      orderProducts {
+        product_name
+        make
+        model
+        year
+      }
     }
   }
 `;

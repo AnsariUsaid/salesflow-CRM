@@ -1,11 +1,13 @@
 'use client';
 
 import { useQuery } from '@apollo/client/react';
-import { Package, Clock, DollarSign, Loader2, ChevronRight } from 'lucide-react';
+import { Package, Clock, DollarSign, Loader2, ChevronRight, Home, ClipboardList, Inbox } from 'lucide-react';
 import { GET_MY_PROCESSING_ORDERS } from '@/graphql/queries';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function MyProcessingOrdersPage() {
+  const router = useRouter();
   const { data, loading } = useQuery(GET_MY_PROCESSING_ORDERS);
 
   const getStatusBadgeColor = (status: string) => {
@@ -41,10 +43,37 @@ export default function MyProcessingOrdersPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
       <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Header */}
+        {/* Header with Navigation */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Processing Agent - My Assigned Orders</h1>
-          <p className="text-gray-600">Orders assigned to you as processing agent</p>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Processing Agent - My Assigned Orders</h1>
+              <p className="text-gray-600">Orders assigned to you as processing agent</p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm flex items-center gap-2"
+              >
+                <Home size={16} />
+                Dashboard
+              </button>
+              <button
+                onClick={() => router.push('/orders-list')}
+                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm flex items-center gap-2"
+              >
+                <ClipboardList size={16} />
+                Orders List
+              </button>
+              <button
+                onClick={() => router.push('/processing/available')}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm flex items-center gap-2"
+              >
+                <Inbox size={16} />
+                Available Orders
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Stats */}
@@ -150,13 +179,21 @@ export default function MyProcessingOrdersPage() {
                         {new Date(order.createdAt).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4">
-                        <Link
-                          href={`/processing/my-orders/${order.order_id}`}
-                          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
-                        >
-                          Manage Procurement
-                          <ChevronRight size={16} />
-                        </Link>
+                        {order.fulfillment_status === 'shipped' || 
+                         order.fulfillment_status === 'delivered' || 
+                         order.fulfillment_status === 'closed' ? (
+                          <span className="text-sm text-gray-500 italic">
+                            Procurement completed
+                          </span>
+                        ) : (
+                          <Link
+                            href={`/processing/my-orders/${order.order_id}`}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
+                          >
+                            Manage Procurement
+                            <ChevronRight size={16} />
+                          </Link>
+                        )}
                       </td>
                     </tr>
                   ))

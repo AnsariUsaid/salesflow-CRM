@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
-import { useMutation } from '@apollo/client/react';
+import { useMutation, useQuery } from '@apollo/client/react';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -19,6 +19,7 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import { CREATE_TRANSACTION, UPDATE_PAYMENT_STATUS } from '@/graphql/mutations';
+import { GET_ORDER } from '@/graphql/queries';
 
 interface PaymentFormData {
   order_id: string;
@@ -61,12 +62,21 @@ export default function PaymentPage() {
 
 function PaymentPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const orderIdFromUrl = searchParams.get('orderId');
+  
   const [orderData, setOrderData] = useState<any>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isSuccess, setIsSuccess] = useState(false);
   const [transactionDetails, setTransactionDetails] = useState<any>(null);
   const [savedCards, setSavedCards] = useState<any[]>([]);
   const [showSavedCards, setShowSavedCards] = useState(false);
+
+  // Fetch order from GraphQL if orderId is in URL
+  const { data: orderQueryData, loading: orderLoading } = useQuery(GET_ORDER, {
+    variables: { orderId: orderIdFromUrl },
+    skip: !orderIdFromUrl,
+  });
 
   // GraphQL Mutations
   const [createTransaction, { loading: isProcessing }] = useMutation(CREATE_TRANSACTION);
@@ -88,7 +98,19 @@ function PaymentPageContent() {
   });
 
   useEffect(() => {
-    // Retrieve order data from session storage
+    // If orderId is in URL, use GraphQL query data
+    if (orderIdFromUrl && orderQueryData?.order) {
+      const order = orderQueryData.order;
+      setOrderData(order);
+      setFormData(prev => ({
+        ...prev,
+        order_id: order.order_id,
+        amount: order.total_amount
+      }));
+      return;
+    }
+
+    // Otherwise, retrieve order data from session storage (for new orders)
     const pendingOrder = sessionStorage.getItem('pendingOrder');
     if (pendingOrder) {
       const order = JSON.parse(pendingOrder);
@@ -102,8 +124,8 @@ function PaymentPageContent() {
         order_id: order.order_id || 'ORD-' + Math.floor(Math.random() * 10000),
         amount: order.total_amount
       }));
-    } else {
-      // Redirect back to orders if no pending order
+    } else if (!orderIdFromUrl) {
+      // Redirect back to orders if no pending order and no orderId in URL
       router.push('/orders');
     }
 
@@ -119,8 +141,21 @@ function PaymentPageContent() {
         console.error('Error fetching cards:', error);
       }
     }
+    
     fetchCards();
-  }, [router]);
+  }, [orderIdFromUrl, orderQueryData, router]);
+
+  // Show loading state when fetching order from URL
+  if (orderLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading order...</p>
+        </div>
+      </div>
+    );
+  }
 
   // --- Handlers ---
 
