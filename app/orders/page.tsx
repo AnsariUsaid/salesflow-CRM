@@ -62,12 +62,12 @@ function OrdersPageContent({ user }: { user: any }) {
     refetch: refetchOrders,
   } = useQuery(GET_ORDERS) as any;
   const [createOrderMutation, { loading: isCreating }] =
-    useMutation(CREATE_ORDER);
-  const [createProductMutation] = useMutation(CREATE_PRODUCT);
+    useMutation(CREATE_ORDER) as any;
+  const [createProductMutation] = useMutation(CREATE_PRODUCT) as any;
   const [createUserMutation, { loading: isCreatingCustomer }] =
-    useMutation(CREATE_USER);
+    useMutation(CREATE_USER) as any;
   const [getUserByEmail, { loading: isFetchingUser }] =
-    useLazyQuery(GET_USER_BY_EMAIL);
+    useLazyQuery(GET_USER_BY_EMAIL) as any;
 
   const products = productsData?.products || [];
   const orders = ordersData?.orders || [];
@@ -512,7 +512,7 @@ function OrdersPageContent({ user }: { user: any }) {
                 No orders yet
               </div>
             ) : (
-              orders.map((order) => (
+              orders.map((order: any) => (
                 <div
                   key={order.order_id}
                   onClick={() => {

@@ -15,7 +15,7 @@ export default function AvailableOrdersPage() {
 
   const { data: userData } = useQuery(GET_ME) as any;
   const { data, loading, refetch } = useQuery(GET_AVAILABLE_ORDERS_FOR_PROCESSING) as any;
-  const [assignAgent] = useMutation(ASSIGN_ORDER_AGENT);
+  const [assignAgent] = useMutation(ASSIGN_ORDER_AGENT) as any;
 
   const handleAssignToMe = async (orderId: string) => {
     if (!userData?.me?.user_id) {

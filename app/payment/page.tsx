@@ -79,8 +79,8 @@ function PaymentPageContent() {
   }) as any;
 
   // GraphQL Mutations
-  const [createTransaction, { loading: isProcessing }] = useMutation(CREATE_TRANSACTION);
-  const [updatePaymentStatus] = useMutation(UPDATE_PAYMENT_STATUS);
+  const [createTransaction, { loading: isProcessing }] = useMutation(CREATE_TRANSACTION) as any;
+  const [updatePaymentStatus] = useMutation(UPDATE_PAYMENT_STATUS) as any;
 
   // Form State
   const [formData, setFormData] = useState<PaymentFormData>({

@@ -22,7 +22,7 @@ export default function FollowupOrderDetailPage() {
     skip: !orderId,
   }) as any;
 
-  const [createTicket, { loading: creating }] = useMutation(CREATE_TICKET);
+  const [createTicket, { loading: creating }] = useMutation(CREATE_TICKET) as any;
 
   const handleCreateTicket = async (e: React.FormEvent) => {
     e.preventDefault();

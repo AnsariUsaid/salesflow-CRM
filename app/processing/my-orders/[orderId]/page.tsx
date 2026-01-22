@@ -17,8 +17,8 @@ export default function ProcessingOrderDetailPage() {
     variables: { orderId },
   }) as any;
 
-  const [updateProcurement] = useMutation(UPDATE_ORDER_PRODUCT_PROCUREMENT);
-  const [completeOrderProcurement] = useMutation(COMPLETE_ORDER_PROCUREMENT);
+  const [updateProcurement] = useMutation(UPDATE_ORDER_PRODUCT_PROCUREMENT) as any;
+  const [completeOrderProcurement] = useMutation(COMPLETE_ORDER_PROCUREMENT) as any;
   
   const [procurementData, setProcurementData] = useState<Record<string, { cost: string; source: string }>>({});
   const [submitting, setSubmitting] = useState(false);

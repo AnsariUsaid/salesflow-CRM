@@ -10,7 +10,7 @@ import Link from 'next/link';
 export default function MyTicketsPage() {
   const { data: userData } = useQuery(GET_ME) as any;
   const { data, loading, refetch } = useQuery(GET_MY_TICKETS) as any;
-  const [updateTicket] = useMutation(UPDATE_TICKET);
+  const [updateTicket] = useMutation(UPDATE_TICKET) as any;
   const [updatingTicketId, setUpdatingTicketId] = useState<string | null>(null);
 
   const handleStatusUpdate = async (ticketId: string, newStatus: string) => {

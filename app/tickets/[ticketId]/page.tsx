@@ -18,8 +18,8 @@ export default function TicketDetailPage() {
     skip: !ticketId,
   }) as any;
 
-  const [updateTicket] = useMutation(UPDATE_TICKET);
-  const [resolveTicket] = useMutation(RESOLVE_TICKET);
+  const [updateTicket] = useMutation(UPDATE_TICKET) as any;
+  const [resolveTicket] = useMutation(RESOLVE_TICKET) as any;
   const [updating, setUpdating] = useState(false);
 
   const handleStatusUpdate = async (newStatus: string) => {

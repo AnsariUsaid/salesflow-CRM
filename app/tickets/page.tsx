@@ -14,7 +14,7 @@ export default function TicketsPage() {
 
   const { data: userData } = useQuery(GET_ME) as any;
   const { data, loading, refetch } = useQuery(GET_TICKETS) as any;
-  const [updateTicket] = useMutation(UPDATE_TICKET);
+  const [updateTicket] = useMutation(UPDATE_TICKET) as any;
 
   const handleAssignToMe = async (ticketId: string) => {
     if (!userData?.me?.user_id) {
