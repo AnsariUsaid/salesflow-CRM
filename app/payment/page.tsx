@@ -73,10 +73,10 @@ function PaymentPageContent() {
   const [showSavedCards, setShowSavedCards] = useState(false);
 
   // Fetch order from GraphQL if orderId is in URL
-  const { data: orderQueryData, loading: orderLoading } = useQuery(GET_ORDER, {
+  const { data: orderQueryData, loading: orderLoading } = useQuery(GET_ORDER,  {
     variables: { orderId: orderIdFromUrl },
     skip: !orderIdFromUrl,
-  });
+  }) as any;
 
   // GraphQL Mutations
   const [createTransaction, { loading: isProcessing }] = useMutation(CREATE_TRANSACTION);

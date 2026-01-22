@@ -48,9 +48,9 @@ function OrderDetailContent({ orderId }: { orderId: string }) {
   const router = useRouter();
 
   // Fetch order details using GraphQL
-  const { data, loading, error } = useQuery(GET_ORDER, {
+  const { data, loading, error } = useQuery(GET_ORDER,  {
     variables: { orderId },
-  });
+  }) as any;
 
   // Update status mutations
   const [updatePaymentStatus, { loading: isUpdatingPayment }] = useMutation(UPDATE_PAYMENT_STATUS, {

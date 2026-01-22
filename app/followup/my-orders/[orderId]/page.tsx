@@ -20,7 +20,7 @@ export default function FollowupOrderDetailPage() {
   const { data, loading, refetch } = useQuery(GET_ORDER, {
     variables: { orderId },
     skip: !orderId,
-  });
+  }) as any;
 
   const [createTicket, { loading: creating }] = useMutation(CREATE_TICKET);
 

@@ -6,7 +6,7 @@ import { GET_MY_FOLLOWUP_ORDERS } from '@/graphql/queries';
 import Link from 'next/link';
 
 export default function MyFollowupOrdersPage() {
-  const { data, loading, refetch } = useQuery(GET_MY_FOLLOWUP_ORDERS);
+  const { data, loading, refetch } = useQuery(GET_MY_FOLLOWUP_ORDERS) as any;
 
   const getStatusBadgeColor = (status: string) => {
     const colors: Record<string, string> = {

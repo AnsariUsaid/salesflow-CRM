@@ -12,8 +12,8 @@ export default function TicketsPage() {
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [assigningTicketId, setAssigningTicketId] = useState<string | null>(null);
 
-  const { data: userData } = useQuery(GET_ME);
-  const { data, loading, refetch } = useQuery(GET_TICKETS);
+  const { data: userData } = useQuery(GET_ME) as any;
+  const { data, loading, refetch } = useQuery(GET_TICKETS) as any;
   const [updateTicket] = useMutation(UPDATE_TICKET);
 
   const handleAssignToMe = async (ticketId: string) => {

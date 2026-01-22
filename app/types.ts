@@ -28,6 +28,9 @@ export type RecentActivity = {
     target: string;
     time: string;
     status: string;
+    salesAgent?: string;
+    amount?: number;
+    orderId?: string;
 };
   
 export const DASHBOARD_STATS_ICONS = {

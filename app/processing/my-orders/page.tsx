@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 
 export default function MyProcessingOrdersPage() {
   const router = useRouter();
-  const { data, loading } = useQuery(GET_MY_PROCESSING_ORDERS);
+  const { data, loading } = useQuery(GET_MY_PROCESSING_ORDERS) as any;
 
   const getStatusBadgeColor = (status: string) => {
     const colors: Record<string, string> = {

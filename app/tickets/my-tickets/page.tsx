@@ -8,8 +8,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 
 export default function MyTicketsPage() {
-  const { data: userData } = useQuery(GET_ME);
-  const { data, loading, refetch } = useQuery(GET_MY_TICKETS);
+  const { data: userData } = useQuery(GET_ME) as any;
+  const { data, loading, refetch } = useQuery(GET_MY_TICKETS) as any;
   const [updateTicket] = useMutation(UPDATE_TICKET);
   const [updatingTicketId, setUpdatingTicketId] = useState<string | null>(null);
 

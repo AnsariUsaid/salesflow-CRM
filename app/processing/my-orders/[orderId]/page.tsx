@@ -15,7 +15,7 @@ export default function ProcessingOrderDetailPage() {
   
   const { data, loading, refetch } = useQuery(GET_ORDER, {
     variables: { orderId },
-  });
+  }) as any;
 
   const [updateProcurement] = useMutation(UPDATE_ORDER_PRODUCT_PROCUREMENT);
   const [completeOrderProcurement] = useMutation(COMPLETE_ORDER_PROCUREMENT);

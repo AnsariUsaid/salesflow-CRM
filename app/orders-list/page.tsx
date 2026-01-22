@@ -60,7 +60,7 @@ function OrdersListContent() {
   }, [searchParams]);
 
   // Fetch orders using GraphQL
-  const { data, loading, error } = useQuery(GET_ORDERS);
+  const { data, loading, error } = useQuery(GET_ORDERS) as any;
   const orders = data?.orders || [];
 
   // Filter orders based on search and filters
@@ -281,7 +281,7 @@ function OrdersListContent() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {filteredOrders.map((order) => (
+                  {filteredOrders.map((order: any) => (
                     <tr
                       key={order.order_id}
                       onClick={() =>

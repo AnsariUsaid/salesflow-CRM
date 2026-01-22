@@ -11,8 +11,8 @@ export default function AvailableFollowupOrdersPage() {
   const { user: clerkUser } = useUser();
   const [assigningOrderId, setAssigningOrderId] = useState<string | null>(null);
 
-  const { data: userData } = useQuery(GET_ME);
-  const { data, loading, refetch } = useQuery(GET_AVAILABLE_ORDERS_FOR_FOLLOWUP);
+  const { data: userData } = useQuery(GET_ME) as any;
+  const { data, loading, refetch } = useQuery(GET_AVAILABLE_ORDERS_FOR_FOLLOWUP) as any;
   const [assignAgent] = useMutation(ASSIGN_ORDER_AGENT);
 
   const handleAssignToMe = async (orderId: string) => {

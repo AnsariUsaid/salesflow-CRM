@@ -12,11 +12,11 @@ export default function TicketDetailPage() {
   const params = useParams();
   const ticketId = params?.ticketId as string;
 
-  const { data: userData } = useQuery(GET_ME);
+  const { data: userData } = useQuery(GET_ME) as any;
   const { data, loading, refetch } = useQuery(GET_TICKET, {
     variables: { ticketId },
     skip: !ticketId,
-  });
+  }) as any;
 
   const [updateTicket] = useMutation(UPDATE_TICKET);
   const [resolveTicket] = useMutation(RESOLVE_TICKET);

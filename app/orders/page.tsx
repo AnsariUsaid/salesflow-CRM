@@ -55,12 +55,12 @@ function OrdersPageContent({ user }: { user: any }) {
     data: productsData,
     loading: productsLoading,
     refetch: refetchProducts,
-  } = useQuery(GET_PRODUCTS);
+  } = useQuery(GET_PRODUCTS) as any;
   const {
     data: ordersData,
     loading: ordersLoading,
     refetch: refetchOrders,
-  } = useQuery(GET_ORDERS);
+  } = useQuery(GET_ORDERS) as any;
   const [createOrderMutation, { loading: isCreating }] =
     useMutation(CREATE_ORDER);
   const [createProductMutation] = useMutation(CREATE_PRODUCT);

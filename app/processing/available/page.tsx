@@ -13,8 +13,8 @@ export default function AvailableOrdersPage() {
   const router = useRouter();
   const [assigningOrderId, setAssigningOrderId] = useState<string | null>(null);
 
-  const { data: userData } = useQuery(GET_ME);
-  const { data, loading, refetch } = useQuery(GET_AVAILABLE_ORDERS_FOR_PROCESSING);
+  const { data: userData } = useQuery(GET_ME) as any;
+  const { data, loading, refetch } = useQuery(GET_AVAILABLE_ORDERS_FOR_PROCESSING) as any;
   const [assignAgent] = useMutation(ASSIGN_ORDER_AGENT);
 
   const handleAssignToMe = async (orderId: string) => {
