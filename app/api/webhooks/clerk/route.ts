@@ -205,6 +205,29 @@ export async function POST(req: Request) {
         break;
       }
 
+      case 'organizationMembership.deleted': {
+        const userId = evt.data.public_user_data?.user_id;
+        
+        if (!userId) {
+          console.log('⚠️ No user_id in organizationMembership.deleted event');
+          break;
+        }
+
+        console.log(`🗑️ Soft deleting user ${userId} from organizationMembership.deleted`);
+
+        await prisma.user.update({
+          where: {
+            clerk_user_id: userId as string,
+          },
+          data: {
+            isdeleted: true,
+          },
+        });
+
+        console.log(`✅ User soft deleted from organization: ${userId}`);
+        break;
+      }
+
       default:
         console.log(`Unhandled event type: ${eventType}`);
     }
