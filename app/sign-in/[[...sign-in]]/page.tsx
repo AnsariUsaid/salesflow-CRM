@@ -9,7 +9,7 @@ export default function SignInPage() {
             footer: "hidden",
           }
         }}
-        signUpUrl={null}
+        signUpUrl={undefined}
       />
     </div>
   );
