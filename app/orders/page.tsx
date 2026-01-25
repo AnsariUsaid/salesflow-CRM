@@ -287,16 +287,6 @@ function OrdersPageContent({ user }: { user: any }) {
         alert(
           `Customer ${data.createUser.firstname} ${data.createUser.lastname} added successfully!`,
         );
-        // Clear form
-        setFormData({
-          firstname: "",
-          lastname: "",
-          email: "",
-          phone: "",
-          address: "",
-          city: "",
-          state: "",
-        });
       }
     } catch (error: any) {
       alert(`Failed to add customer: ${error.message}`);
@@ -466,7 +456,7 @@ function OrdersPageContent({ user }: { user: any }) {
   }, [searchQuery, products]);
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden font-sans text-gray-800">
+    <div className="flex bg-gray-50 font-sans text-gray-800 mt-6" style={{ height: 'calc(100vh - 96px)' }}>
       {/* --- Sidebar --- */}
       <aside
         className={`${
@@ -565,7 +555,7 @@ function OrdersPageContent({ user }: { user: any }) {
       </aside>
 
       {/* --- Main Content --- */}
-      <main className="flex-1 flex flex-col h-screen overflow-hidden">
+      <main className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
         <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8 shadow-sm">
           <h1 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
