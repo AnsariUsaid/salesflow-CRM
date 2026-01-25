@@ -94,73 +94,6 @@ export default function DashboardPage() {
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
-      {/* Top Navigation Bar */}
-      <nav className="bg-white/80 backdrop-blur-md border-b border-gray-200 px-8 py-4 sticky top-0 z-50 shadow-sm">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-600 rounded-lg">
-              <Package className="text-white" size={24} />
-            </div>
-            <div>
-              <span className="text-xl font-bold text-gray-900">SalesFlow</span>
-              <span className="text-xs block text-gray-500 -mt-0.5">CRM System</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <Link
-              href="/orders"
-              className="px-3 py-2 text-sm text-gray-700 hover:text-gray-900 font-medium transition-colors rounded-lg hover:bg-gray-100"
-            >
-              Orders
-            </Link>
-            <Link
-              href="/processing/available"
-              className="px-3 py-2 text-sm text-gray-700 hover:text-gray-900 font-medium transition-colors rounded-lg hover:bg-gray-100"
-            >
-              Processing
-            </Link>
-            <Link
-              href="/processing/my-orders"
-              className="px-3 py-2 text-sm text-gray-700 hover:text-gray-900 font-medium transition-colors rounded-lg hover:bg-gray-100"
-            >
-              My Processing
-            </Link>
-            <Link
-              href="/followup/available"
-              className="px-3 py-2 text-sm text-gray-700 hover:text-gray-900 font-medium transition-colors rounded-lg hover:bg-gray-100"
-            >
-              Follow-up
-            </Link>
-            <Link
-              href="/followup/my-orders"
-              className="px-3 py-2 text-sm text-gray-700 hover:text-gray-900 font-medium transition-colors rounded-lg hover:bg-gray-100"
-            >
-              My Follow-up
-            </Link>
-            <Link
-              href="/tickets"
-              className="px-3 py-2 text-sm text-gray-700 hover:text-gray-900 font-medium transition-colors rounded-lg hover:bg-gray-100"
-            >
-              Tickets
-            </Link>
-            <Link
-              href="/tickets/my-tickets"
-              className="px-3 py-2 text-sm text-gray-700 hover:text-gray-900 font-medium transition-colors rounded-lg hover:bg-gray-100"
-            >
-              My Tickets
-            </Link>
-            <UserButton 
-              afterSignOutUrl="/"
-              appearance={{
-                elements: {
-                  avatarBox: "w-10 h-10"
-                }
-              }}
-            />
-          </div>
-        </div>
-      </nav>
-
       <div className="p-8 max-w-7xl mx-auto space-y-8">
         
         {/* Welcome Section */}
@@ -234,7 +167,7 @@ export default function DashboardPage() {
                     }`} />
                     <div className="flex-1">
                       <p className="text-sm text-gray-800">
-                        <span className="font-semibold">{item.salesAgent}</span> created new Order <span className="font-semibold text-green-600">${(item.amount || 0).toFixed(2)}</span> <span className="font-mono bg-gray-100 px-1 rounded text-xs">#{item.orderId}...</span>
+                        <span className="font-semibold">{item.salesAgent}</span> created new Order <span className="font-semibold text-green-600">${(item.amount || 0).toFixed(2)}</span> <span className="font-mono bg-gray-100 px-1 rounded text-xs">#{item.orderNumber}</span>
                       </p>
                       <p className="text-xs text-gray-400 mt-1">{item.time}</p>
                     </div>
@@ -326,7 +259,7 @@ export default function DashboardPage() {
                           {order.customer.firstname.charAt(0)}{order.customer.lastname.charAt(0)}
                         </div>
                         <div className="text-sm">
-                          <p className="font-medium text-gray-700">Order #{order.order_id.substring(0, 7)}</p>
+                          <p className="font-medium text-gray-700">Order #{order.order_number}</p>
                           <p className="text-xs text-red-500 font-semibold">${order.total_amount.toFixed(2)}</p>
                         </div>
                       </div>

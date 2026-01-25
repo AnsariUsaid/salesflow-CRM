@@ -26,27 +26,6 @@ export default function Home() {
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900">
-      {/* Top Navigation Bar */}
-      <nav className="bg-white/10 backdrop-blur-md border-b border-white/10 px-8 py-4">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-600 rounded-lg">
-              <Package className="text-white" size={24} />
-            </div>
-            <div>
-              <span className="text-xl font-bold text-white">SalesFlow</span>
-              <span className="text-xs block text-blue-200 -mt-0.5">CRM System</span>
-            </div>
-          </div>
-          <SignInButton mode="redirect">
-            <button className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all font-medium shadow-lg shadow-blue-600/30 hover:shadow-xl hover:shadow-blue-600/40 flex items-center gap-2">
-              Sign In
-              <ArrowUpRight size={16} />
-            </button>
-          </SignInButton>
-        </div>
-      </nav>
-
       {/* Hero Section */}
       <div className="max-w-7xl mx-auto px-8 py-24">
         <div className="text-center max-w-4xl mx-auto">

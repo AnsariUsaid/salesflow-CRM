@@ -76,6 +76,7 @@ model Product {
 
 model Order {
   order_id          String            @id @default(cuid())
+  order_number      Int               @unique @default(autoincrement())
   org_id            String
   user_id           String
   customer_name     String

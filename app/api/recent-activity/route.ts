@@ -39,6 +39,7 @@ export async function GET() {
       salesAgent: activity.salesUser ? `${activity.salesUser.firstname} ${activity.salesUser.lastname}` : 'Unknown Agent',
       amount: activity.total_amount,
       orderId: activity.order_id.substring(0, 12),
+      orderNumber: activity.order_number,
       time: timeSince(activity.createdAt),
       status: 'created',
     }));

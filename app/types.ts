@@ -31,6 +31,7 @@ export type RecentActivity = {
     salesAgent?: string;
     amount?: number;
     orderId?: string;
+    orderNumber?: number;
 };
   
 export const DASHBOARD_STATS_ICONS = {
