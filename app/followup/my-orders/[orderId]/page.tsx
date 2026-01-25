@@ -78,11 +78,11 @@ export default function FollowupOrderDetailPage() {
 
   if (!data?.order) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 flex items-center justify-center">
+      <div className="min-h-screen pt-8 bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Order Not Found</h2>
-          <Link href="/followup/my-orders" className="text-blue-600 hover:underline">
-            Back to My Orders
+          <Link href="/followup/available" className="text-blue-600 hover:underline">
+            Back to Follow-up Orders
           </Link>
         </div>
       </div>
@@ -92,12 +92,15 @@ export default function FollowupOrderDetailPage() {
   const order = data.order;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
+    <div className="min-h-screen pt-8 bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Header */}
         <div className="mb-8">
-          <Link href="/followup/my-orders" className="text-blue-600 hover:underline mb-2 inline-block">
-            ← Back to My Orders
+          <Link href="/followup/available" className="text-blue-600 hover:text-blue-800 mb-4 inline-flex items-center gap-2 font-medium">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to Follow-up Orders
           </Link>
           <div className="flex items-center justify-between">
             <div>
@@ -113,13 +116,22 @@ export default function FollowupOrderDetailPage() {
                 </span>
               </div>
             </div>
-            <button
-              onClick={() => setShowTicketForm(!showTicketForm)}
-              className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
-            >
-              <Plus size={20} />
-              Create Ticket
-            </button>
+            <div className="flex gap-3">
+              <Link
+                href={`/orders-list/${order.order_id}`}
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 font-medium"
+              >
+                <Package size={20} />
+                View Order Details
+              </Link>
+              <button
+                onClick={() => setShowTicketForm(!showTicketForm)}
+                className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all shadow-sm hover:shadow-md flex items-center gap-2 font-medium"
+              >
+                <Plus size={20} />
+                Create Ticket
+              </button>
+            </div>
           </div>
         </div>
 

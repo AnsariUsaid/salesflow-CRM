@@ -15,7 +15,7 @@ import {
 export type DashboardStats = {
     label: string;
     value: string;
-    change: string;
+    change?: string;
     icon: React.ComponentType<any>;
     color: string;
     bg: string;

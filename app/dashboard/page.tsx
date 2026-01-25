@@ -5,19 +5,17 @@ import { useRouter } from "next/navigation";
 import { 
   LayoutDashboard, 
   PlusCircle, 
-  CreditCard, 
-  TrendingUp,
+  CreditCard,
   Users,
   Package,
   Clock,
   ArrowUpRight,
   MoreVertical,
   ChevronRight,
-  List,
   ClipboardList,
   UserCheck
 } from 'lucide-react';
-import { UserButton, useUser } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
 import { DashboardStats, RecentActivity, DASHBOARD_STATS_ICONS, RECENT_ACTIVITY_CONFIG } from "../types";
 
@@ -42,15 +40,11 @@ export default function DashboardPage() {
     fetch('/api/dashboard-stats')
       .then(res => res.json())
       .then(data => {
-        const revenueChangeStr = data.revenueChange >= 0 
-          ? `+${data.revenueChange}%` 
-          : `${data.revenueChange}%`;
-        
         const stats: DashboardStats[] = [
-          { label: 'Total Revenue', value: `$${(data.totalRevenue || 0).toLocaleString()}`, change: revenueChangeStr, icon: DASHBOARD_STATS_ICONS.TrendingUp, color: 'text-green-600', bg: 'bg-green-100' },
-          { label: 'Active Orders', value: data.activeOrders, change: '+4', icon: DASHBOARD_STATS_ICONS.Package, color: 'text-blue-600', bg: 'bg-blue-100' },
-          { label: 'New Customers', value: data.newCustomers, change: '+2.4%', icon: DASHBOARD_STATS_ICONS.Users, color: 'text-purple-600', bg: 'bg-purple-100' },
-          { label: 'Pending Orders', value: data.pendingProcess, change: '-2', icon: DASHBOARD_STATS_ICONS.Clock, color: 'text-orange-600', bg: 'bg-orange-100' },
+          { label: 'Total Revenue', value: `$${(data.totalRevenue || 0).toLocaleString()}`, icon: DASHBOARD_STATS_ICONS.TrendingUp, color: 'text-green-600', bg: 'bg-green-100' },
+          { label: 'Active Orders', value: data.activeOrders, icon: DASHBOARD_STATS_ICONS.Package, color: 'text-blue-600', bg: 'bg-blue-100' },
+          { label: 'New Customers', value: data.newCustomers, icon: DASHBOARD_STATS_ICONS.Users, color: 'text-purple-600', bg: 'bg-purple-100' },
+          { label: 'Pending Orders', value: data.pendingProcess, icon: DASHBOARD_STATS_ICONS.Clock, color: 'text-orange-600', bg: 'bg-orange-100' },
         ];
         setDashboardStats(stats);
       });
@@ -95,34 +89,6 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
       <div className="p-8 max-w-7xl mx-auto space-y-8">
-        
-        {/* Welcome Section */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 pt-8">
-          <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">
-              Welcome back{user?.firstName ? `, ${user.firstName}` : ''}
-            </h1>
-            <p className="text-gray-600 text-lg">Here is what&apos;s happening with your store today.</p>
-          </div>
-          <div className="flex gap-3">
-            <button className="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm flex items-center gap-2">
-              <TrendingUp size={16} />
-              View Reports
-            </button>
-            <Link 
-              href="/orders-list"
-              className="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm flex items-center gap-2"
-            >
-              <List size={16} /> Existing Orders
-            </Link>
-            <Link 
-              href="/orders"
-              className="px-5 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-all flex items-center gap-2 shadow-lg shadow-blue-600/30 hover:shadow-xl"
-            >
-              <PlusCircle size={16} /> Create Order
-            </Link>
-          </div>
-        </div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -132,11 +98,6 @@ export default function DashboardPage() {
                 <div className={`p-3 rounded-xl ${stat.bg} group-hover:scale-110 transition-transform`}>
                   <stat.icon className={stat.color} size={24} />
                 </div>
-                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                  stat.change.startsWith('+') ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'
-                }`}>
-                  {stat.change}
-                </span>
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-1">{stat.value}</h3>
               <p className="text-sm text-gray-600">{stat.label}</p>

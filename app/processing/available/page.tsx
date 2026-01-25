@@ -1,17 +1,19 @@
 'use client';
 
 import { useQuery, useMutation } from '@apollo/client/react';
-import { Package, Clock, DollarSign, User, Loader2, Home, ClipboardList, ArrowLeft } from 'lucide-react';
+import { Package, Clock, DollarSign, User, Loader2, ChevronRight } from 'lucide-react';
 import { GET_AVAILABLE_ORDERS_FOR_PROCESSING, GET_ME } from '@/graphql/queries';
 import { ASSIGN_ORDER_AGENT } from '@/graphql/mutations';
 import { useUser } from '@clerk/nextjs';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function AvailableOrdersPage() {
   const { user: clerkUser } = useUser();
   const router = useRouter();
   const [assigningOrderId, setAssigningOrderId] = useState<string | null>(null);
+  const [showMyOrdersOnly, setShowMyOrdersOnly] = useState(false);
 
   const { data: userData } = useQuery(GET_ME) as any;
   const { data, loading, refetch } = useQuery(GET_AVAILABLE_ORDERS_FOR_PROCESSING) as any;
@@ -65,48 +67,53 @@ export default function AvailableOrdersPage() {
     );
   }
 
-  const orders = data?.availableOrdersForProcessing || [];
-  const unassignedOrders = orders.filter((order: any) => !order.processing_agent);
-  const assignedOrders = orders.filter((order: any) => order.processing_agent);
+  const allOrders = data?.availableOrdersForProcessing || [];
+  const myOrders = allOrders.filter((order: any) => order.processing_agent === userData?.me?.user_id);
+  const orders = showMyOrdersOnly ? myOrders : allOrders;
+  const unassignedOrders = allOrders.filter((order: any) => !order.processing_agent);
+  const assignedOrders = allOrders.filter((order: any) => order.processing_agent);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
+    <div className="min-h-screen pt-8 bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
       <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Header with Navigation */}
+        {/* Header with Filter */}
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Processing Agent - Available Orders</h1>
-              <p className="text-gray-600">All active orders ready for processing agent assignment</p>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Processing Orders</h1>
+              <p className="text-gray-600">
+                {showMyOrdersOnly 
+                  ? 'Your assigned orders for processing' 
+                  : 'All active orders ready for processing'}
+              </p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex items-center gap-3 bg-white rounded-lg p-1 shadow-sm border border-gray-200">
               <button
-                onClick={() => router.push('/dashboard')}
-                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm flex items-center gap-2"
+                onClick={() => setShowMyOrdersOnly(false)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  !showMyOrdersOnly
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
               >
-                <Home size={16} />
-                Dashboard
+                All Orders
               </button>
               <button
-                onClick={() => router.push('/orders-list')}
-                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm flex items-center gap-2"
+                onClick={() => setShowMyOrdersOnly(true)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  showMyOrdersOnly
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
               >
-                <ClipboardList size={16} />
-                Orders List
-              </button>
-              <button
-                onClick={() => router.push('/processing/my-orders')}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm flex items-center gap-2"
-              >
-                <Package size={16} />
-                My Orders
+                My Orders ({myOrders.length})
               </button>
             </div>
           </div>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-blue-100 rounded-lg">
@@ -114,7 +121,7 @@ export default function AvailableOrdersPage() {
               </div>
               <div>
                 <p className="text-sm text-gray-600">Total Orders</p>
-                <p className="text-2xl font-bold text-gray-900">{orders.length}</p>
+                <p className="text-2xl font-bold text-gray-900">{allOrders.length}</p>
               </div>
             </div>
           </div>
@@ -135,8 +142,19 @@ export default function AvailableOrdersPage() {
                 <User className="text-purple-600" size={24} />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Assigned</p>
-                <p className="text-2xl font-bold text-gray-900">{assignedOrders.length}</p>
+                <p className="text-sm text-gray-600">Assigned to Others</p>
+                <p className="text-2xl font-bold text-gray-900">{assignedOrders.length - myOrders.length}</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-orange-100 rounded-lg">
+                <User className="text-orange-600" size={24} />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">My Orders</p>
+                <p className="text-2xl font-bold text-gray-900">{myOrders.length}</p>
               </div>
             </div>
           </div>
@@ -163,8 +181,14 @@ export default function AvailableOrdersPage() {
                   <tr>
                     <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
                       <Package className="mx-auto mb-4 text-gray-400" size={48} />
-                      <p className="text-lg font-medium">No active orders</p>
-                      <p className="text-sm">All orders have been closed or cancelled</p>
+                      <p className="text-lg font-medium">
+                        {showMyOrdersOnly ? 'No orders assigned to you' : 'No active orders'}
+                      </p>
+                      <p className="text-sm">
+                        {showMyOrdersOnly 
+                          ? 'Assign orders from the "All Orders" view' 
+                          : 'All orders have been closed or cancelled'}
+                      </p>
                     </td>
                   </tr>
                 ) : (
@@ -218,14 +242,33 @@ export default function AvailableOrdersPage() {
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap">
                           {isAssigned ? (
-                            <div className="flex flex-col gap-1">
-                              <span className="text-xs text-gray-500">Assigned to:</span>
-                              <span className={`font-medium text-xs ${isAssignedToMe ? 'text-blue-600' : 'text-gray-700'}`}>
-                                {isAssignedToMe 
-                                  ? 'You' 
-                                  : `${order.processingUser?.firstname} ${order.processingUser?.lastname}`
-                                }
-                              </span>
+                            <div className="flex flex-col gap-2">
+                              <div className="flex flex-col gap-1">
+                                <span className="text-xs text-gray-500">Assigned to:</span>
+                                <span className={`font-medium text-xs ${isAssignedToMe ? 'text-blue-600' : 'text-gray-700'}`}>
+                                  {isAssignedToMe 
+                                    ? 'You' 
+                                    : `${order.processingUser?.firstname} ${order.processingUser?.lastname}`
+                                  }
+                                </span>
+                              </div>
+                              {isAssignedToMe && (
+                                order.fulfillment_status !== 'shipped' && 
+                                order.fulfillment_status !== 'delivered' && 
+                                order.fulfillment_status !== 'closed' ? (
+                                  <Link
+                                    href={`/processing/my-orders/${order.order_id}`}
+                                    className="inline-flex items-center justify-center gap-1 px-3 py-1.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all shadow-sm hover:shadow-md font-medium text-xs"
+                                  >
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                                    </svg>
+                                    Manage
+                                  </Link>
+                                ) : (
+                                  <span className="text-xs text-gray-500 italic">Completed</span>
+                                )
+                              )}
                             </div>
                           ) : (
                             <button

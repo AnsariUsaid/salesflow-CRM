@@ -60,7 +60,7 @@ export default function ProcessingOrderDetailPage() {
       });
 
       alert('Procurement completed successfully! Order moved to Shipped status.');
-      router.push('/processing/my-orders');
+      router.push('/processing/available');
     } catch (error: any) {
       console.error('Error submitting procurement:', error);
       alert(error.message || 'Failed to complete procurement');
@@ -71,7 +71,7 @@ export default function ProcessingOrderDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 flex items-center justify-center">
+      <div className="min-h-screen pt-8 bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 flex items-center justify-center">
         <Loader2 className="animate-spin text-blue-600" size={48} />
       </div>
     );
@@ -79,12 +79,12 @@ export default function ProcessingOrderDetailPage() {
 
   if (!order) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 flex items-center justify-center">
+      <div className="min-h-screen pt-8 bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="mx-auto mb-4 text-red-600" size={48} />
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Order Not Found</h2>
-          <Link href="/processing/my-orders" className="text-blue-600 hover:underline">
-            Back to My Orders
+          <Link href="/processing/available" className="text-blue-600 hover:underline">
+            Back to Processing Orders
           </Link>
         </div>
       </div>
@@ -109,15 +109,18 @@ export default function ProcessingOrderDetailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
+    <div className="min-h-screen pt-8 bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Header */}
-        <div className="mb-8 flex items-center gap-4">
+        <div className="mb-8">
           <Link
-            href="/processing/my-orders"
-            className="p-2 hover:bg-white rounded-lg transition-colors"
+            href="/processing/available"
+            className="text-blue-600 hover:text-blue-800 mb-4 inline-flex items-center gap-2 font-medium"
           >
-            <ArrowLeft className="text-gray-600" size={24} />
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to Processing Orders
           </Link>
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Order Procurement Details</h1>

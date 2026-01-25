@@ -2,76 +2,94 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { UserButton } from "@clerk/nextjs";
-import { Package } from "lucide-react";
+import { useUser, SignOutButton } from "@clerk/nextjs";
+import { Package, User, LogOut } from "lucide-react";
 
 export default function Navigation() {
   const pathname = usePathname();
+  const { user } = useUser();
+
+  // Hide navigation on home and sign-in pages
+  if (pathname === "/" || pathname.startsWith("/sign-in")) {
+    return null;
+  }
 
   const navItems = [
     { href: "/dashboard", label: "Dashboard" },
     { href: "/orders", label: "New Order" },
-    { href: "/orders-list", label: "Orders List" },
-    { href: "/processing/available", label: "Processing Available" },
-    { href: "/processing/my-orders", label: "My Processing" },
-    { href: "/followup/available", label: "Followup Available" },
-    { href: "/followup/my-orders", label: "My Followup" },
+    { href: "/orders-list", label: "Existing Orders" },
+    { href: "/processing/available", label: "Processing" },
+    { href: "/followup/available", label: "Follow-up" },
     { href: "/tickets", label: "Tickets" },
-    { href: "/tickets/my-tickets", label: "My Tickets" },
   ];
 
+  const isActive = (href: string) => {
+    // Exact match for most routes
+    if (href === "/orders") {
+      return pathname === "/orders";
+    }
+    // For other routes, use startsWith to catch sub-routes
+    return pathname.startsWith(href);
+  };
+
   return (
-    <nav className="bg-gray-800 text-white shadow-lg">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          <div className="flex items-center space-x-4">
-            <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-              <div className="p-2 bg-emerald-500 rounded-lg">
-                <Package className="text-white" size={24} />
-              </div>
-              <div>
-                <span className="text-xl font-bold text-white">SalesFlow</span>
-                <span className="text-xs block text-gray-400 -mt-0.5">CRM System</span>
-              </div>
-            </Link>
-            <div className="hidden md:flex space-x-1">
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    pathname === item.href
-                      ? "bg-gray-900 text-white"
-                      : "text-gray-300 hover:bg-gray-700 hover:text-white"
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </div>
-          </div>
-          <div className="flex items-center">
-            <UserButton afterSignOutUrl="/sign-in" />
-          </div>
-        </div>
-      </div>
+    <>
+      {/* Spacer to prevent content from going under fixed nav */}
+      <div className="h-[72px]"></div>
       
-      {/* Mobile menu */}
-      <div className="md:hidden px-2 pt-2 pb-3 space-y-1">
-        {navItems.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={`block px-3 py-2 rounded-md text-base font-medium ${
-              pathname === item.href
-                ? "bg-gray-900 text-white"
-                : "text-gray-300 hover:bg-gray-700 hover:text-white"
-            }`}
+      <div className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200/50 shadow-sm">
+        <nav className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          {/* Logo & Brand */}
+          <Link 
+            href="/dashboard" 
+            className="flex items-center gap-3 group"
           >
-            {item.label}
+            <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg shadow-md group-hover:shadow-lg group-hover:scale-105 transition-all">
+              <Package className="text-white" size={20} strokeWidth={2.5} />
+            </div>
+            <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+              SalesFlow
+            </span>
           </Link>
-        ))}
+
+          {/* Nav Items */}
+          <div className="flex items-center gap-1">
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  isActive(item.href)
+                    ? "bg-blue-50 text-blue-700 shadow-sm"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                }`}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+
+          {/* User Info & Logout */}
+          {user?.primaryEmailAddress && (
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 bg-gradient-to-br from-slate-50 to-blue-50 rounded-lg px-4 py-2 border border-gray-200/50 shadow-sm">
+                <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full">
+                  <User className="text-white" size={16} strokeWidth={2.5} />
+                </div>
+                <span className="text-sm font-medium text-gray-700">
+                  {user.primaryEmailAddress.emailAddress}
+                </span>
+              </div>
+              <SignOutButton>
+                <button className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors border border-red-200 shadow-sm">
+                  <LogOut size={16} />
+                  <span className="text-sm font-medium">Logout</span>
+                </button>
+              </SignOutButton>
+            </div>
+          )}
+        </nav>
       </div>
-    </nav>
+    </>
   );
 }

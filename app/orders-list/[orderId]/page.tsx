@@ -127,7 +127,7 @@ function OrderDetailContent({ orderId }: { orderId: string }) {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gray-50">
+      <div className="min-h-screen pt-8 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading order details...</p>
@@ -138,7 +138,7 @@ function OrderDetailContent({ orderId }: { orderId: string }) {
 
   if (error || !order) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gray-50">
+      <div className="min-h-screen pt-8 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
         <div className="text-center">
           <Package size={48} className="mx-auto text-gray-300 mb-4" />
           <p className="text-gray-600">{error ? 'Error loading order' : 'Order not found'}</p>
@@ -154,39 +154,28 @@ function OrderDetailContent({ orderId }: { orderId: string }) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 py-4">
+    <div className="min-h-screen pt-8 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <button
+            onClick={() => router.push('/orders-list')}
+            className="text-blue-600 hover:text-blue-800 mb-4 inline-flex items-center gap-2 font-medium"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to Orders List
+          </button>
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => router.push('/orders-list')}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <ArrowLeft size={20} className="text-gray-600" />
-              </button>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                  <Package className="text-blue-600" size={28} />
-                  Order #{order.order_number}
-                </h1>
-                <p className="text-sm text-gray-500 mt-1">Order ID: {order.order_id}</p>
-              </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
+                <Package className="text-blue-600" size={32} />
+                Order #{order.order_number}
+              </h1>
+              <p className="text-sm text-gray-500">Order ID: {order.order_id}</p>
             </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => router.push('/dashboard')}
-                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm"
-              >
-                Dashboard
-              </button>
-              <button
-                onClick={() => router.push('/orders-list')}
-                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm"
-              >
-                Orders List
-              </button>
+            <div className="flex gap-3">
               <div className={`px-4 py-2 rounded-lg border-2 font-semibold ${getPaymentStatusColor(order.payment_status)}`}>
                 {order.payment_status.charAt(0).toUpperCase() + order.payment_status.slice(1)}
               </div>
@@ -196,10 +185,8 @@ function OrderDetailContent({ orderId }: { orderId: string }) {
             </div>
           </div>
         </div>
-      </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-6 py-8">
+        {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Order Info & Customer */}
           <div className="lg:col-span-2 space-y-6">
@@ -375,7 +362,7 @@ function OrderDetailContent({ orderId }: { orderId: string }) {
             </div>
           </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

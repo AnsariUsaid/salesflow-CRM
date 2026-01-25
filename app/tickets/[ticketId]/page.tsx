@@ -114,7 +114,7 @@ export default function TicketDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 flex items-center justify-center">
+      <div className="min-h-screen pt-8 bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 flex items-center justify-center">
         <Loader2 className="animate-spin text-blue-600" size={48} />
       </div>
     );
@@ -122,7 +122,7 @@ export default function TicketDetailPage() {
 
   if (!data?.ticket) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 flex items-center justify-center">
+      <div className="min-h-screen pt-8 bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Ticket Not Found</h2>
           <Link href="/tickets" className="text-blue-600 hover:underline">
@@ -139,12 +139,15 @@ export default function TicketDetailPage() {
   const isAssignedToMe = ticket.assigned_to === userData?.me?.user_id;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
+    <div className="min-h-screen pt-8 bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
       <div className="max-w-5xl mx-auto px-6 py-8">
         {/* Header */}
         <div className="mb-8">
-          <Link href="/tickets" className="text-blue-600 hover:underline mb-2 inline-block">
-            ← Back to Tickets
+          <Link href="/tickets" className="text-blue-600 hover:text-blue-800 mb-4 inline-flex items-center gap-2 font-medium">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to Tickets
           </Link>
           <div className="flex items-start justify-between">
             <div className="flex-1">
@@ -206,27 +209,41 @@ export default function TicketDetailPage() {
             {/* Linked Order */}
             {ticket.order && (
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <Package size={20} className="text-blue-600" />
-                  Linked Order
-                </h2>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                    <Package size={20} className="text-blue-600" />
+                    Linked Order
+                  </h2>
+                  <Link 
+                    href={`/orders-list/${ticket.order.order_id}`}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex items-center gap-2"
+                  >
+                    View Order Details
+                    <ArrowRight size={16} />
+                  </Link>
+                </div>
                 <div className="space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Order ID</span>
-                    <Link 
-                      href={`/orders/${ticket.order.order_id}`}
-                      className="font-medium text-blue-600 hover:underline"
-                    >
-                      #{ticket.order.order_id.slice(-8).toUpperCase()}
-                    </Link>
+                    <span className="text-gray-600">Order Number</span>
+                    <span className="font-mono font-medium text-gray-900">
+                      #{ticket.order.order_number}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Customer</span>
                     <span className="font-medium text-gray-900">{ticket.order.customer_name}</span>
                   </div>
                   <div className="flex justify-between">
+                    <span className="text-gray-600">Email</span>
+                    <span className="font-medium text-gray-900">{ticket.order.customer_email}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Phone</span>
+                    <span className="font-medium text-gray-900">{ticket.order.customer_phone}</span>
+                  </div>
+                  <div className="flex justify-between">
                     <span className="text-gray-600">Amount</span>
-                    <span className="font-medium text-gray-900">${ticket.order.total_amount.toFixed(2)}</span>
+                    <span className="font-semibold text-gray-900">${ticket.order.total_amount.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Status</span>
