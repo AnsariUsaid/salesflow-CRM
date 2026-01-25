@@ -15,7 +15,7 @@ import {
 export type DashboardStats = {
     label: string;
     value: string;
-    change: string;
+    change?: string;
     icon: React.ComponentType<any>;
     color: string;
     bg: string;
@@ -28,6 +28,10 @@ export type RecentActivity = {
     target: string;
     time: string;
     status: string;
+    salesAgent?: string;
+    amount?: number;
+    orderId?: string;
+    orderNumber?: number;
 };
   
 export const DASHBOARD_STATS_ICONS = {

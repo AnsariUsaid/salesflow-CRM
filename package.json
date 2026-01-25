@@ -5,9 +5,10 @@
   "description": "CRM system for automobile parts sales with call-based order management",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@apollo/client": "^4.1.0",

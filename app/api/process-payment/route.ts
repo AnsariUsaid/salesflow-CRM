@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
           const order = await prisma.order.update({
             where: { order_id: orderData.order_id },
             data: {
-              order_status: 'paid',
+              payment_status: 'paid',
               sales_agent: dbUser.user_id,
             },
           });

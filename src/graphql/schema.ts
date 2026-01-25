@@ -8,6 +8,22 @@ export const typeDefs = `#graphql
     customer
   }
 
+  enum PaymentStatus {
+    unpaid
+    partial
+    paid
+    refunded
+  }
+
+  enum FulfillmentStatus {
+    pending
+    processing
+    shipped
+    delivered
+    closed
+    cancelled
+  }
+
   enum OrderStatus {
     created
     paid
@@ -103,6 +119,7 @@ export const typeDefs = `#graphql
 
   type Order {
     order_id: ID!
+    order_number: Int!
     org_id: String!
     user_id: String!
     customer_name: String!
@@ -115,10 +132,12 @@ export const typeDefs = `#graphql
     processing_agent: String
     followup_agent: String
     order_tracking: String
-    order_status: OrderStatus!
+    payment_status: PaymentStatus!
+    fulfillment_status: FulfillmentStatus!
     createdAt: String!
     updatedAt: String!
     customer: User
+    processingUser: User
     orderProducts: [OrderProduct!]!
     transactions: [Transaction!]!
   }
@@ -162,6 +181,7 @@ export const typeDefs = `#graphql
     me: User
     users: [User!]!
     user(user_id: ID!): User
+    userByEmail(email: String!): User
 
     # Organization queries
     myOrganization: Organization
@@ -175,6 +195,10 @@ export const typeDefs = `#graphql
     orders: [Order!]!
     order(order_id: ID!): Order
     myOrders: [Order!]!
+    availableOrdersForProcessing: [Order!]!
+    myProcessingOrders: [Order!]!
+    availableOrdersForFollowup: [Order!]!
+    myFollowupOrders: [Order!]!
 
     # Transaction queries
     transactions: [Transaction!]!
@@ -189,6 +213,17 @@ export const typeDefs = `#graphql
   # Mutations
   type Mutation {
     # User mutations
+    createUser(
+      firstname: String!
+      lastname: String!
+      email: String!
+      phone: String
+      address: String
+      city: String
+      state: String
+      role: UserRole
+    ): User!
+
     updateUser(
       user_id: ID!
       firstname: String
@@ -233,13 +268,34 @@ export const typeDefs = `#graphql
 
     updateOrderStatus(
       order_id: ID!
-      order_status: OrderStatus!
+      payment_status: PaymentStatus
+      fulfillment_status: FulfillmentStatus
+    ): Order!
+
+    updatePaymentStatus(
+      order_id: ID!
+      payment_status: PaymentStatus!
+    ): Order!
+
+    updateFulfillmentStatus(
+      order_id: ID!
+      fulfillment_status: FulfillmentStatus!
     ): Order!
 
     assignOrderAgent(
       order_id: ID!
       agent_type: String!
       agent_id: String!
+    ): Order!
+
+    updateOrderProductProcurement(
+      orderproduct_id: ID!
+      procurement_cost: Float!
+      procurement_source: String!
+    ): OrderProduct!
+
+    completeOrderProcurement(
+      order_id: ID!
     ): Order!
 
     # Transaction mutations

@@ -1,24 +1,45 @@
 
 import { NextResponse } from 'next/server';
+import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   try {
+    const { userId } = await auth();
+    
+    if (!userId) {
+      return new NextResponse('Unauthorized', { status: 401 });
+    }
+
+    // Get the user's org_id
+    const user = await prisma.user.findFirst({
+      where: { clerk_user_id: userId, isdeleted: false },
+      select: { org_id: true }
+    });
+
+    if (!user) {
+      return new NextResponse('User not found', { status: 404 });
+    }
+
     const recentActivity = await prisma.order.findMany({
       take: 5,
+      where: {
+        org_id: user.org_id,
+      },
       orderBy: {
         createdAt: 'desc',
       },
       include: {
-        customer: true,
+        salesUser: true,
       },
     });
 
     const formattedActivity = recentActivity.map((activity) => ({
       id: activity.order_id,
-      user: activity.customer ? activity.customer.firstname + ' ' + activity.customer.lastname : 'Unknown User',
-      action: 'Created new order',
-      target: `#ORD-${activity.order_id}`,
+      salesAgent: activity.salesUser ? `${activity.salesUser.firstname} ${activity.salesUser.lastname}` : 'Unknown Agent',
+      amount: activity.total_amount,
+      orderId: activity.order_id.substring(0, 12),
+      orderNumber: activity.order_number,
       time: timeSince(activity.createdAt),
       status: 'created',
     }));

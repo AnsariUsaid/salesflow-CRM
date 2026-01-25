@@ -20,7 +20,8 @@ export const CREATE_ORDER = gql`
     ) {
       order_id
       customer_name
-      order_status
+      payment_status
+      fulfillment_status
       total_amount
       createdAt
     }
@@ -28,10 +29,31 @@ export const CREATE_ORDER = gql`
 `;
 
 export const UPDATE_ORDER_STATUS = gql`
-  mutation UpdateOrderStatus($order_id: ID!, $order_status: OrderStatus!) {
-    updateOrderStatus(order_id: $order_id, order_status: $order_status) {
+  mutation UpdateOrderStatus($order_id: ID!, $payment_status: PaymentStatus, $fulfillment_status: FulfillmentStatus) {
+    updateOrderStatus(order_id: $order_id, payment_status: $payment_status, fulfillment_status: $fulfillment_status) {
       order_id
-      order_status
+      payment_status
+      fulfillment_status
+      updatedAt
+    }
+  }
+`;
+
+export const UPDATE_PAYMENT_STATUS = gql`
+  mutation UpdatePaymentStatus($order_id: ID!, $payment_status: PaymentStatus!) {
+    updatePaymentStatus(order_id: $order_id, payment_status: $payment_status) {
+      order_id
+      payment_status
+      updatedAt
+    }
+  }
+`;
+
+export const UPDATE_FULFILLMENT_STATUS = gql`
+  mutation UpdateFulfillmentStatus($order_id: ID!, $fulfillment_status: FulfillmentStatus!) {
+    updateFulfillmentStatus(order_id: $order_id, fulfillment_status: $fulfillment_status) {
+      order_id
+      fulfillment_status
       updatedAt
     }
   }
@@ -44,6 +66,25 @@ export const ASSIGN_ORDER_AGENT = gql`
       sales_agent
       processing_agent
       followup_agent
+    }
+  }
+`;
+
+export const UPDATE_ORDER_PRODUCT_PROCUREMENT = gql`
+  mutation UpdateOrderProductProcurement($orderproduct_id: ID!, $procurement_cost: Float!, $procurement_source: String!) {
+    updateOrderProductProcurement(orderproduct_id: $orderproduct_id, procurement_cost: $procurement_cost, procurement_source: $procurement_source) {
+      orderproduct_id
+      procurement_cost
+      procurement_source
+    }
+  }
+`;
+
+export const COMPLETE_ORDER_PROCUREMENT = gql`
+  mutation CompleteOrderProcurement($order_id: ID!) {
+    completeOrderProcurement(order_id: $order_id) {
+      order_id
+      fulfillment_status
     }
   }
 `;
@@ -188,6 +229,36 @@ export const RESOLVE_TICKET = gql`
 `;
 
 // User Mutations
+export const CREATE_USER = gql`
+  mutation CreateUser(
+    $firstname: String!
+    $lastname: String!
+    $email: String!
+    $phone: String
+    $address: String
+    $city: String
+    $state: String
+    $role: UserRole
+  ) {
+    createUser(
+      firstname: $firstname
+      lastname: $lastname
+      email: $email
+      phone: $phone
+      address: $address
+      city: $city
+      state: $state
+      role: $role
+    ) {
+      user_id
+      firstname
+      lastname
+      email
+      role
+    }
+  }
+`;
+
 export const UPDATE_USER = gql`
   mutation UpdateUser(
     $user_id: ID!
