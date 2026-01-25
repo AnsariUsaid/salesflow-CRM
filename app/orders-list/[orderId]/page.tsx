@@ -169,7 +169,7 @@ function OrderDetailContent({ orderId }: { orderId: string }) {
               <div>
                 <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
                   <Package className="text-blue-600" size={28} />
-                  Order Details
+                  Order #{order.order_number}
                 </h1>
                 <p className="text-sm text-gray-500 mt-1">Order ID: {order.order_id}</p>
               </div>

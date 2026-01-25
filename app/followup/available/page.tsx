@@ -127,7 +127,7 @@ export default function AvailableFollowupOrdersPage() {
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-3">
                       <h3 className="text-lg font-semibold text-gray-900">
-                        Order #{order.order_id.slice(-8).toUpperCase()}
+                        Order #{order.order_number}
                       </h3>
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(order.payment_status)}`}>
                         {order.payment_status}

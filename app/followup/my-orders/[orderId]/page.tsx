@@ -102,7 +102,7 @@ export default function FollowupOrderDetailPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                Order #{order.order_id.slice(-8).toUpperCase()}
+                Order #{order.order_number}
               </h1>
               <div className="flex gap-2">
                 <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(order.payment_status)}`}>

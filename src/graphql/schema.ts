@@ -119,6 +119,7 @@ export const typeDefs = `#graphql
 
   type Order {
     order_id: ID!
+    order_number: Int!
     org_id: String!
     user_id: String!
     customer_name: String!

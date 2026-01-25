@@ -121,7 +121,7 @@ export default function MyProcessingOrdersPage() {
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Order ID</th>
+                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Order Number</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Customer</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Amount</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Payment</th>
@@ -151,7 +151,7 @@ export default function MyProcessingOrdersPage() {
                     <tr key={order.order_id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4">
                         <span className="font-mono text-sm text-gray-900">
-                          {order.order_id.slice(0, 8)}...
+                          #{order.order_number}
                         </span>
                       </td>
                       <td className="px-6 py-4">

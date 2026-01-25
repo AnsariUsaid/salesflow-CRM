@@ -145,26 +145,23 @@ export default function AvailableOrdersPage() {
         {/* Orders Table */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-max">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Order ID</th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Customer</th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Product Name</th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Make</th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Model</th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Year</th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Amount</th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Payment</th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Fulfillment</th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Created</th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Action</th>
+                  <th className="text-left px-4 py-4 text-xs font-semibold text-gray-700 whitespace-nowrap">Order #</th>
+                  <th className="text-left px-4 py-4 text-xs font-semibold text-gray-700">Customer</th>
+                  <th className="text-left px-4 py-4 text-xs font-semibold text-gray-700">Product Info</th>
+                  <th className="text-left px-4 py-4 text-xs font-semibold text-gray-700 whitespace-nowrap">Amount</th>
+                  <th className="text-left px-4 py-4 text-xs font-semibold text-gray-700 whitespace-nowrap">Payment</th>
+                  <th className="text-left px-4 py-4 text-xs font-semibold text-gray-700 whitespace-nowrap">Fulfillment</th>
+                  <th className="text-left px-4 py-4 text-xs font-semibold text-gray-700 whitespace-nowrap">Created</th>
+                  <th className="text-left px-4 py-4 text-xs font-semibold text-gray-700 whitespace-nowrap">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {orders.length === 0 ? (
                   <tr>
-                    <td colSpan={10} className="px-6 py-12 text-center text-gray-500">
+                    <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
                       <Package className="mx-auto mb-4 text-gray-400" size={48} />
                       <p className="text-lg font-medium">No active orders</p>
                       <p className="text-sm">All orders have been closed or cancelled</p>
@@ -179,57 +176,51 @@ export default function AvailableOrdersPage() {
                     
                     return (
                       <tr key={order.order_id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4">
+                        <td className="px-4 py-4 whitespace-nowrap">
                           <span className="font-mono text-sm text-gray-900">
-                            {order.order_id.slice(0, 8)}...
+                            #{order.order_number}
                           </span>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-4 py-4">
                           <div>
-                            <p className="font-medium text-gray-900">{order.customer_name}</p>
-                            <p className="text-sm text-gray-500">{order.customer_email}</p>
+                            <p className="font-medium text-gray-900 text-sm">{order.customer_name}</p>
+                            <p className="text-xs text-gray-500">{order.customer_email}</p>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-4 py-4">
                           <div className="text-sm text-gray-900">
-                            {firstProduct?.product_name || 'N/A'}
+                            <p className="font-medium">{firstProduct?.product_name || 'N/A'}</p>
+                            <p className="text-xs text-gray-500">
+                              {firstProduct?.make} {firstProduct?.model} {firstProduct?.year}
+                            </p>
                             {productCount > 1 && (
-                              <span className="ml-1 text-xs text-gray-500">+{productCount - 1} more</span>
+                              <span className="text-xs text-blue-600">+{productCount - 1} more</span>
                             )}
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-900">
-                          {firstProduct?.make || 'N/A'}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-900">
-                          {firstProduct?.model || 'N/A'}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-900">
-                          {firstProduct?.year || 'N/A'}
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="font-semibold text-gray-900">
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          <span className="font-semibold text-gray-900 text-sm">
                             ${order.total_amount.toLocaleString()}
                           </span>
                         </td>
-                        <td className="px-6 py-4">
-                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(order.payment_status)}`}>
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(order.payment_status)}`}>
                             {order.payment_status}
                           </span>
                         </td>
-                        <td className="px-6 py-4">
-                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(order.fulfillment_status)}`}>
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(order.fulfillment_status)}`}>
                             {order.fulfillment_status}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-600">
+                        <td className="px-4 py-4 text-sm text-gray-600 whitespace-nowrap">
                           {new Date(order.createdAt).toLocaleDateString()}
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-4 py-4 whitespace-nowrap">
                           {isAssigned ? (
                             <div className="flex flex-col gap-1">
                               <span className="text-xs text-gray-500">Assigned to:</span>
-                              <span className={`font-medium text-sm ${isAssignedToMe ? 'text-blue-600' : 'text-gray-700'}`}>
+                              <span className={`font-medium text-xs ${isAssignedToMe ? 'text-blue-600' : 'text-gray-700'}`}>
                                 {isAssignedToMe 
                                   ? 'You' 
                                   : `${order.processingUser?.firstname} ${order.processingUser?.lastname}`
@@ -240,11 +231,11 @@ export default function AvailableOrdersPage() {
                             <button
                               onClick={() => handleAssignToMe(order.order_id)}
                               disabled={assigningOrderId === order.order_id}
-                              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                              className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-xs disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap"
                             >
                               {assigningOrderId === order.order_id ? (
                                 <>
-                                  <Loader2 className="animate-spin" size={16} />
+                                  <Loader2 className="animate-spin" size={14} />
                                   Assigning...
                                 </>
                               ) : (

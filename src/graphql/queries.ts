@@ -5,6 +5,7 @@ export const GET_ORDERS = gql`
   query GetOrders {
     orders {
       order_id
+      order_number
       customer_name
       customer_email
       customer_phone
@@ -20,6 +21,7 @@ export const GET_ORDER = gql`
   query GetOrder($orderId: ID!) {
     order(order_id: $orderId) {
       order_id
+      order_number
       customer_name
       customer_email
       customer_phone
@@ -169,6 +171,7 @@ export const GET_AVAILABLE_ORDERS_FOR_PROCESSING = gql`
   query GetAvailableOrdersForProcessing {
     availableOrdersForProcessing {
       order_id
+      order_number
       customer_name
       customer_email
       customer_phone
@@ -196,6 +199,7 @@ export const GET_MY_PROCESSING_ORDERS = gql`
   query GetMyProcessingOrders {
     myProcessingOrders {
       order_id
+      order_number
       customer_name
       customer_email
       customer_phone
@@ -221,6 +225,7 @@ export const GET_AVAILABLE_ORDERS_FOR_FOLLOWUP = gql`
   query GetAvailableOrdersForFollowup {
     availableOrdersForFollowup {
       order_id
+      order_number
       customer_name
       customer_email
       customer_phone
@@ -243,6 +248,7 @@ export const GET_MY_FOLLOWUP_ORDERS = gql`
   query GetMyFollowupOrders {
     myFollowupOrders {
       order_id
+      order_number
       customer_name
       customer_email
       customer_phone
