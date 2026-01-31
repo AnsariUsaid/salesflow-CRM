@@ -2,13 +2,11 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { 
-  LayoutDashboard, 
-  PlusCircle, 
+import {
+  LayoutDashboard,
+  PlusCircle,
   CreditCard,
-  Users,
   Package,
-  Clock,
   ArrowUpRight,
   MoreVertical,
   ChevronRight,
@@ -30,7 +28,7 @@ export default function DashboardPage() {
   // Redirect if not signed in
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
-      router.push("/");
+      router.push("/sign-in");
     }
   }, [isLoaded, isSignedIn, router]);
 

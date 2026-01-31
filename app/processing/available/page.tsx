@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery, useMutation } from '@apollo/client/react';
-import { Package, Clock, DollarSign, User, Loader2, ChevronRight } from 'lucide-react';
+import { Package, Clock, User, Loader2, ChevronRight } from 'lucide-react';
 import { GET_AVAILABLE_ORDERS_FOR_PROCESSING, GET_ME } from '@/graphql/queries';
 import { ASSIGN_ORDER_AGENT } from '@/graphql/mutations';
 import { useUser } from '@clerk/nextjs';

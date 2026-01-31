@@ -1,15 +1,13 @@
 'use client';
 
 import { useQuery, useMutation } from '@apollo/client/react';
-import { Package, Clock, DollarSign, User, Loader2, ChevronRight } from 'lucide-react';
+import { Package, Clock, User, Loader2, ChevronRight } from 'lucide-react';
 import { GET_AVAILABLE_ORDERS_FOR_FOLLOWUP, GET_ME } from '@/graphql/queries';
 import { ASSIGN_ORDER_AGENT } from '@/graphql/mutations';
-import { useUser } from '@clerk/nextjs';
 import { useState } from 'react';
 import Link from 'next/link';
 
 export default function AvailableFollowupOrdersPage() {
-  const { user: clerkUser } = useUser();
   const [assigningOrderId, setAssigningOrderId] = useState<string | null>(null);
   const [showMyOrdersOnly, setShowMyOrdersOnly] = useState(false);
 

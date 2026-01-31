@@ -13,7 +13,6 @@ import {
   Save,
   Package,
   User as UserIcon,
-  Truck,
   ShoppingCart,
   UserPlus,
 } from "lucide-react";
@@ -155,8 +154,6 @@ function OrdersPageContent({ user }: { user: any }) {
       price,
     } = newProductForm;
 
-    console.log('Creating product with:', newProductForm);
-
     if (!product_name || !product_code || !make || !model || !year) {
       const missing = [];
       if (!product_name) missing.push('Product Name');
@@ -216,7 +213,7 @@ function OrdersPageContent({ user }: { user: any }) {
     const newOrderProduct: OrderProduct = {
       ...product,
       quantity: 1,
-      price: 50.0,
+      price: product.price || 50.0,
     };
 
     const exists = selectedProducts.find(

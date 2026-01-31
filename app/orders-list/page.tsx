@@ -7,7 +7,6 @@ import { useQuery } from "@apollo/client/react";
 import {
   Search,
   Package,
-  ArrowLeft,
   CreditCard,
   Home,
   PlusCircle,
