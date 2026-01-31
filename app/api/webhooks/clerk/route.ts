@@ -51,7 +51,33 @@ export async function POST(req: Request) {
 
   // Handle the webhook
   const eventType = evt.type;
-  const { id, email_addresses, first_name, last_name, phone_numbers, public_metadata } = evt.data;
+  const eventData = evt.data as any;
+  const { id, email_addresses, first_name, last_name, phone_numbers, public_metadata, organization_memberships } = eventData;
+
+  // Helper function to map Clerk roles to database roles
+  function mapClerkRoleToDbRole(clerkRole?: string): string {
+    if (!clerkRole) return 'customer';
+    
+    // Remove 'org:' prefix if present
+    const normalizedRole = clerkRole.replace(/^org:/, '');
+    
+    const roleMap: Record<string, string> = {
+      'Admin': 'admin',
+      'admin': 'admin',
+      'Sales Team': 'sales',
+      'sales': 'sales',
+      'sales_team': 'sales',
+      'Follow Up Team': 'followup',
+      'followup': 'followup',
+      'followup_team': 'followup',
+      'Processing Team': 'processing',
+      'processing': 'processing',
+      'processing_team': 'processing',
+      'customer': 'customer',
+    };
+    
+    return roleMap[normalizedRole] || 'customer';
+  }
 
   try {
     switch (eventType) {
@@ -59,6 +85,28 @@ export async function POST(req: Request) {
         // Create user in database
         const primaryEmail = email_addresses?.[0]?.email_address || '';
         const primaryPhone = phone_numbers?.[0]?.phone_number || '';
+        
+        // Debug logging
+        console.log('🔍 Webhook data:', {
+          id,
+          organization_memberships,
+          public_metadata,
+          role_from_org: organization_memberships?.[0]?.role,
+          role_from_metadata: public_metadata?.role
+        });
+        
+        // Get role from organization membership or metadata
+        let userRole = 'customer';
+        if (organization_memberships && organization_memberships.length > 0) {
+          const orgRole = organization_memberships[0]?.role;
+          userRole = mapClerkRoleToDbRole(orgRole);
+          console.log(`📋 Using org role: ${orgRole} -> ${userRole}`);
+        } else if (public_metadata?.role) {
+          userRole = mapClerkRoleToDbRole(public_metadata.role as string);
+          console.log(`📋 Using metadata role: ${public_metadata.role} -> ${userRole}`);
+        } else {
+          console.log('⚠️ No role found, defaulting to customer');
+        }
         
         // Get org_id from metadata or create default org
         let orgId = public_metadata?.org_id as string;
@@ -82,12 +130,12 @@ export async function POST(req: Request) {
             lastname: last_name || '',
             email: primaryEmail,
             phone: primaryPhone,
-            role: (public_metadata?.role as any) || 'admin',
+            role: userRole as any,
             meta_data: public_metadata as any,
           },
         });
 
-        console.log(`✅ User created: ${id}`);
+        console.log(`✅ User created: ${id} with role: ${userRole}`);
         break;
       }
 
@@ -96,6 +144,7 @@ export async function POST(req: Request) {
         const primaryEmail = email_addresses?.[0]?.email_address || '';
         const primaryPhone = phone_numbers?.[0]?.phone_number || '';
 
+        // Don't update role here - it's handled by organizationMembership events
         await prisma.user.update({
           where: {
             clerk_user_id: id as string,
@@ -105,7 +154,6 @@ export async function POST(req: Request) {
             lastname: last_name || '',
             email: primaryEmail,
             phone: primaryPhone,
-            role: (public_metadata?.role as any) || undefined,
             meta_data: public_metadata as any,
           },
         });
@@ -126,6 +174,57 @@ export async function POST(req: Request) {
         });
 
         console.log(`✅ User soft deleted: ${id}`);
+        break;
+      }
+
+      case 'organizationMembership.created':
+      case 'organizationMembership.updated': {
+        // Get user ID from organization membership
+        const userId = evt.data.public_user_data?.user_id;
+        const orgRole = evt.data.role;
+        
+        if (!userId) {
+          console.log('⚠️ No user_id in organizationMembership event');
+          break;
+        }
+
+        const userRole = mapClerkRoleToDbRole(orgRole);
+        
+        console.log(`🔄 Updating user ${userId} role from org membership: ${orgRole} -> ${userRole}`);
+
+        await prisma.user.update({
+          where: {
+            clerk_user_id: userId as string,
+          },
+          data: {
+            role: userRole as any,
+          },
+        });
+
+        console.log(`✅ User role updated from organization: ${userId} -> ${userRole}`);
+        break;
+      }
+
+      case 'organizationMembership.deleted': {
+        const userId = evt.data.public_user_data?.user_id;
+        
+        if (!userId) {
+          console.log('⚠️ No user_id in organizationMembership.deleted event');
+          break;
+        }
+
+        console.log(`🗑️ Soft deleting user ${userId} from organizationMembership.deleted`);
+
+        await prisma.user.update({
+          where: {
+            clerk_user_id: userId as string,
+          },
+          data: {
+            isdeleted: true,
+          },
+        });
+
+        console.log(`✅ User soft deleted from organization: ${userId}`);
         break;
       }
 

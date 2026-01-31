@@ -1,25 +1,51 @@
 
 import { NextResponse } from 'next/server';
+import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   try {
+    const { userId } = await auth();
+    
+    if (!userId) {
+      return new NextResponse('Unauthorized', { status: 401 });
+    }
+
+    // Get the user's org_id
+    const user = await prisma.user.findFirst({
+      where: { clerk_user_id: userId, isdeleted: false },
+      select: { org_id: true }
+    });
+
+    if (!user) {
+      return new NextResponse('User not found', { status: 404 });
+    }
+
     const pendingOrders = await prisma.order.findMany({
       where: {
-        order_status: 'created',
-        transactions: {
-          none: {
-            status: 'completed',
-          },
-        },
+        org_id: user.org_id,
+        payment_status: 'unpaid',
       },
       include: {
         customer: true,
       },
+      orderBy: {
+        total_amount: 'desc',
+      },
       take: 5,
     });
 
-    return NextResponse.json(pendingOrders);
+    const totalCount = await prisma.order.count({
+      where: {
+        org_id: user.org_id,
+        payment_status: 'unpaid',
+      },
+    });
+
+    return NextResponse.json({
+      orders: pendingOrders,
+      totalCount,
+    });
   } catch (error) {
     console.error(error);
     return new NextResponse('Internal Server Error', { status: 500 });

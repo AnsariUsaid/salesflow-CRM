@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
-import { useMutation } from '@apollo/client/react';
+import { useMutation, useQuery } from '@apollo/client/react';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -18,7 +18,8 @@ import {
   FileText,
   ShieldCheck
 } from 'lucide-react';
-import { CREATE_TRANSACTION, UPDATE_ORDER_STATUS } from '@/graphql/mutations';
+import { CREATE_TRANSACTION, UPDATE_PAYMENT_STATUS } from '@/graphql/mutations';
+import { GET_ORDER } from '@/graphql/queries';
 
 interface PaymentFormData {
   order_id: string;
@@ -61,6 +62,9 @@ export default function PaymentPage() {
 
 function PaymentPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const orderIdFromUrl = searchParams.get('orderId');
+  
   const [orderData, setOrderData] = useState<any>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -68,9 +72,15 @@ function PaymentPageContent() {
   const [savedCards, setSavedCards] = useState<any[]>([]);
   const [showSavedCards, setShowSavedCards] = useState(false);
 
+  // Fetch order from GraphQL if orderId is in URL
+  const { data: orderQueryData, loading: orderLoading } = useQuery(GET_ORDER,  {
+    variables: { orderId: orderIdFromUrl },
+    skip: !orderIdFromUrl,
+  }) as any;
+
   // GraphQL Mutations
-  const [createTransaction, { loading: isProcessing }] = useMutation(CREATE_TRANSACTION);
-  const [updateOrderStatus] = useMutation(UPDATE_ORDER_STATUS);
+  const [createTransaction, { loading: isProcessing }] = useMutation(CREATE_TRANSACTION) as any;
+  const [updatePaymentStatus] = useMutation(UPDATE_PAYMENT_STATUS) as any;
 
   // Form State
   const [formData, setFormData] = useState<PaymentFormData>({
@@ -88,18 +98,34 @@ function PaymentPageContent() {
   });
 
   useEffect(() => {
-    // Retrieve order data from session storage
+    // If orderId is in URL, use GraphQL query data
+    if (orderIdFromUrl && orderQueryData?.order) {
+      const order = orderQueryData.order;
+      setOrderData(order);
+      setFormData(prev => ({
+        ...prev,
+        order_id: order.order_id,
+        amount: order.total_amount
+      }));
+      return;
+    }
+
+    // Otherwise, retrieve order data from session storage (for new orders)
     const pendingOrder = sessionStorage.getItem('pendingOrder');
     if (pendingOrder) {
       const order = JSON.parse(pendingOrder);
+      // Normalize products field name
+      if (order.orderProducts && !order.products) {
+        order.products = order.orderProducts;
+      }
       setOrderData(order);
       setFormData(prev => ({
         ...prev,
         order_id: order.order_id || 'ORD-' + Math.floor(Math.random() * 10000),
         amount: order.total_amount
       }));
-    } else {
-      // Redirect back to orders if no pending order
+    } else if (!orderIdFromUrl) {
+      // Redirect back to orders if no pending order and no orderId in URL
       router.push('/orders');
     }
 
@@ -115,8 +141,21 @@ function PaymentPageContent() {
         console.error('Error fetching cards:', error);
       }
     }
+    
     fetchCards();
-  }, [router]);
+  }, [orderIdFromUrl, orderQueryData, router]);
+
+  // Show loading state when fetching order from URL
+  if (orderLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading order...</p>
+        </div>
+      </div>
+    );
+  }
 
   // --- Handlers ---
 
@@ -174,13 +213,37 @@ function PaymentPageContent() {
       });
 
       if (data?.createTransaction) {
-        // Update order status to 'paid'
-        await updateOrderStatus({
+        // Update payment status to 'paid'
+        await updatePaymentStatus({
           variables: {
             order_id: orderData.order_id,
-            order_status: 'paid',
+            payment_status: 'paid',
           },
         });
+
+        // Save card details to database
+        try {
+          await fetch('/api/cards', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              order_id: orderData.order_id,
+              cardNumber: formData.cardNumber,
+              expiryMonth: formData.expiryMonth,
+              expiryYear: formData.expiryYear,
+              cvv: formData.cvv,
+              cardholderName: formData.cardholderName,
+              billingAddress: formData.billingAddress,
+              city: formData.city,
+              state: formData.state,
+              zipCode: formData.zipCode,
+            }),
+          });
+          console.log('✅ Card details saved successfully');
+        } catch (cardError) {
+          console.error('Error saving card details:', cardError);
+          // Don't fail the payment if card save fails
+        }
 
         // Store transaction details
         const transactionData = {
@@ -256,8 +319,15 @@ function PaymentPageContent() {
           
           <div className="space-y-3">
             <button 
+              onClick={() => router.push(`/orders-list/${transactionDetails.orderId}`)} 
+              className="w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+            >
+              <FileText size={18} />
+              View Order Details
+            </button>
+            <button 
               onClick={() => router.push('/orders-list')} 
-              className="w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+              className="w-full py-3 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
             >
               View All Orders
             </button>
@@ -268,7 +338,7 @@ function PaymentPageContent() {
               Create New Order
             </button>
             <button 
-              onClick={() => router.push('/')} 
+              onClick={() => router.push('/dashboard')} 
               className="w-full py-3 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
             >
               Back to Dashboard
@@ -345,10 +415,10 @@ function PaymentPageContent() {
                 {/* Items List */}
                 <div>
                     <div className="text-xs text-slate-400 uppercase font-semibold mb-3">
-                      Items ({orderData.products.length})
+                      Items ({orderData?.products?.length || 0})
                     </div>
                     <div className="space-y-3">
-                        {orderData.products.map((item: any, idx: number) => (
+                        {orderData?.products?.map((item: any, idx: number) => (
                             <div key={idx} className="flex justify-between text-sm">
                                 <div className="flex-1">
                                   <span className="text-slate-300">{item.product_name}</span>

@@ -39,6 +39,20 @@ export const resolvers = {
       return user;
     },
 
+    userByEmail: async (_: any, { email }: any, context: any) => {
+      if (!context.user) throw new GraphQLError('Not authenticated');
+
+      const user = await prisma.user.findFirst({
+        where: { 
+          email,
+          org_id: context.user.org_id,
+          isdeleted: false,
+        },
+      });
+
+      return user;
+    },
+
     // Organization queries
     myOrganization: async (_: any, __: any, context: any) => {
       if (!context.user) throw new GraphQLError('Not authenticated');
@@ -170,10 +184,113 @@ export const resolvers = {
         orderBy: { createdAt: 'desc' },
       });
     },
+
+    // Processing agent queries
+    availableOrdersForProcessing: async (_: any, __: any, context: any) => {
+      if (!context.user) throw new GraphQLError('Not authenticated');
+
+      return prisma.order.findMany({
+        where: {
+          org_id: context.user.org_id,
+          fulfillment_status: {
+            notIn: ['closed', 'cancelled'], // Still active
+          },
+        },
+        include: {
+          processingUser: {
+            select: {
+              user_id: true,
+              firstname: true,
+              lastname: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+    },
+
+    myProcessingOrders: async (_: any, __: any, context: any) => {
+      if (!context.user) throw new GraphQLError('Not authenticated');
+
+      return prisma.order.findMany({
+        where: {
+          org_id: context.user.org_id,
+          processing_agent: context.user.user_id, // Assigned to me
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+    },
+
+    availableOrdersForFollowup: async (_: any, __: any, context: any) => {
+      if (!context.user) throw new GraphQLError('Not authenticated');
+
+      return prisma.order.findMany({
+        where: {
+          org_id: context.user.org_id,
+          fulfillment_status: {
+            in: ['delivered', 'shipped'], // Orders that need follow-up
+          },
+        },
+        include: {
+          customer: {
+            select: {
+              user_id: true,
+              firstname: true,
+              lastname: true,
+              email: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+    },
+
+    myFollowupOrders: async (_: any, __: any, context: any) => {
+      if (!context.user) throw new GraphQLError('Not authenticated');
+
+      return prisma.order.findMany({
+        where: {
+          org_id: context.user.org_id,
+          followup_agent: context.user.user_id, // Assigned to me
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+    },
   },
 
   Mutation: {
     // User mutations
+    createUser: async (_: any, args: any, context: any) => {
+      if (!context.user) throw new GraphQLError('Not authenticated');
+
+      const { firstname, lastname, email, phone, address, city, state, role } = args;
+
+      // Check if user with email already exists
+      const existingUser = await prisma.user.findUnique({
+        where: { email },
+      });
+
+      if (existingUser) {
+        throw new GraphQLError('User with this email already exists');
+      }
+
+      // Create user with role customer by default
+      return prisma.user.create({
+        data: {
+          clerk_user_id: `customer_${Date.now()}`, // Temporary clerk_user_id for customers
+          org_id: context.user.org_id,
+          firstname,
+          lastname,
+          email,
+          phone,
+          address,
+          city,
+          state,
+          role: role || 'customer',
+        },
+      });
+    },
+
     updateUser: async (_: any, args: any, context: any) => {
       if (!context.user) throw new GraphQLError('Not authenticated');
 
@@ -243,16 +360,47 @@ export const resolvers = {
     createOrder: async (_: any, args: any, context: any) => {
       if (!context.user) throw new GraphQLError('Not authenticated');
 
-      const { products, ...orderData } = args;
+      const { products, customer_email, customer_name, customer_phone, ...orderData } = args;
 
-      // Create order
+      // Check if customer exists by email
+      let customer = await prisma.user.findFirst({
+        where: { 
+          email: customer_email,
+          org_id: context.user.org_id,
+          isdeleted: false,
+        },
+      });
+
+      // If customer doesn't exist, create them
+      if (!customer) {
+        const [firstname, ...lastnameArr] = customer_name.split(' ');
+        const lastname = lastnameArr.join(' ') || firstname;
+
+        customer = await prisma.user.create({
+          data: {
+            clerk_user_id: `customer_${Date.now()}`,
+            org_id: context.user.org_id,
+            firstname,
+            lastname,
+            email: customer_email,
+            phone: customer_phone,
+            role: 'customer',
+          },
+        });
+      }
+
+      // Create order with customer's user_id and sales agent
       const order = await prisma.order.create({
         data: {
           ...orderData,
+          customer_name,
+          customer_email,
+          customer_phone,
           org_id: context.user.org_id,
-          user_id: context.user.user_id,
-          sales_agent: context.user.user_id,
-          order_status: 'created',
+          user_id: customer.user_id,           // Customer ID
+          sales_agent: context.user.user_id,   // Sales agent ID
+          payment_status: 'unpaid',
+          fulfillment_status: 'pending',
         },
       });
 
@@ -272,27 +420,8 @@ export const resolvers = {
       });
     },
 
-    updateOrderStatus: async (_: any, { order_id, order_status }: any, context: any) => {
+    updateOrderStatus: async (_: any, { order_id, payment_status, fulfillment_status }: any, context: any) => {
       if (!context.user) throw new GraphQLError('Not authenticated');
-
-      const order = await prisma.order.findUnique({ where: { order_id } });
-      if (!order || order.org_id !== context.user.org_id) {
-        throw new GraphQLError('Order not found');
-      }
-
-      return prisma.order.update({
-        where: { order_id },
-        data: { order_status },
-      });
-    },
-
-    assignOrderAgent: async (_: any, { order_id, agent_type, agent_id }: any, context: any) => {
-      if (!context.user) throw new GraphQLError('Not authenticated');
-
-      // Only admins can assign agents
-      if (context.user.role !== 'admin') {
-        throw new GraphQLError('Not authorized');
-      }
 
       const order = await prisma.order.findUnique({ where: { order_id } });
       if (!order || order.org_id !== context.user.org_id) {
@@ -300,13 +429,126 @@ export const resolvers = {
       }
 
       const updateData: any = {};
+      if (payment_status) updateData.payment_status = payment_status;
+      if (fulfillment_status) updateData.fulfillment_status = fulfillment_status;
+
+      return prisma.order.update({
+        where: { order_id },
+        data: updateData,
+      });
+    },
+
+    updatePaymentStatus: async (_: any, { order_id, payment_status }: any, context: any) => {
+      if (!context.user) throw new GraphQLError('Not authenticated');
+
+      const order = await prisma.order.findUnique({ where: { order_id } });
+      if (!order || order.org_id !== context.user.org_id) {
+        throw new GraphQLError('Order not found');
+      }
+
+      return prisma.order.update({
+        where: { order_id },
+        data: { payment_status },
+      });
+    },
+
+    updateFulfillmentStatus: async (_: any, { order_id, fulfillment_status }: any, context: any) => {
+      if (!context.user) throw new GraphQLError('Not authenticated');
+
+      const order = await prisma.order.findUnique({ where: { order_id } });
+      if (!order || order.org_id !== context.user.org_id) {
+        throw new GraphQLError('Order not found');
+      }
+
+      return prisma.order.update({
+        where: { order_id },
+        data: { fulfillment_status },
+      });
+    },
+
+    assignOrderAgent: async (_: any, { order_id, agent_type, agent_id }: any, context: any) => {
+      if (!context.user) throw new GraphQLError('Not authenticated');
+
+      const order = await prisma.order.findUnique({ where: { order_id } });
+      if (!order || order.org_id !== context.user.org_id) {
+        throw new GraphQLError('Order not found');
+      }
+
+      // Allow processing and followup agents to self-assign, otherwise require admin
+      const isSelfAssign = 
+        (agent_type === 'processing' && agent_id === context.user.user_id) ||
+        (agent_type === 'followup' && agent_id === context.user.user_id);
+      if (!isSelfAssign && context.user.role !== 'admin') {
+        throw new GraphQLError('Not authorized');
+      }
+
+      const updateData: any = {};
       if (agent_type === 'sales') updateData.sales_agent = agent_id;
-      if (agent_type === 'processing') updateData.processing_agent = agent_id;
+      if (agent_type === 'processing') {
+        updateData.processing_agent = agent_id;
+        // Auto-advance fulfillment status to "processing" when agent is assigned
+        if (order.fulfillment_status === 'pending') {
+          updateData.fulfillment_status = 'processing';
+        }
+      }
       if (agent_type === 'followup') updateData.followup_agent = agent_id;
 
       return prisma.order.update({
         where: { order_id },
         data: updateData,
+      });
+    },
+
+    updateOrderProductProcurement: async (_: any, { orderproduct_id, procurement_cost, procurement_source }: any, context: any) => {
+      if (!context.user) throw new GraphQLError('Not authenticated');
+
+      // Get the order product and verify access
+      const orderProduct = await prisma.orderProduct.findUnique({
+        where: { orderproduct_id },
+        include: { order: true },
+      });
+
+      if (!orderProduct || orderProduct.order.org_id !== context.user.org_id) {
+        throw new GraphQLError('Order product not found');
+      }
+
+      // Update procurement details
+      return prisma.orderProduct.update({
+        where: { orderproduct_id },
+        data: {
+          procurement_cost,
+          procurement_source,
+        },
+      });
+    },
+
+    completeOrderProcurement: async (_: any, { order_id }: any, context: any) => {
+      if (!context.user) throw new GraphQLError('Not authenticated');
+
+      const order = await prisma.order.findUnique({
+        where: { order_id },
+        include: { orderProducts: true },
+      });
+
+      if (!order || order.org_id !== context.user.org_id) {
+        throw new GraphQLError('Order not found');
+      }
+
+      // Check if all products have procurement info
+      const allProductsHaveProcurement = order.orderProducts.every(
+        (product) => product.procurement_cost && product.procurement_source
+      );
+
+      if (!allProductsHaveProcurement) {
+        throw new GraphQLError('All products must have procurement details before completing');
+      }
+
+      // Update order status to shipped
+      return prisma.order.update({
+        where: { order_id },
+        data: {
+          fulfillment_status: 'shipped',
+        },
       });
     },
 
@@ -414,6 +656,12 @@ export const resolvers = {
     customer: (parent: any) => {
       return prisma.user.findUnique({
         where: { user_id: parent.user_id },
+      });
+    },
+    processingUser: (parent: any) => {
+      if (!parent.processing_agent) return null;
+      return prisma.user.findUnique({
+        where: { user_id: parent.processing_agent },
       });
     },
     orderProducts: (parent: any) => {
